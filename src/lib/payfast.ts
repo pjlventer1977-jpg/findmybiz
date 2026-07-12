@@ -4,6 +4,45 @@ const PAYFAST_URL = process.env.PAYFAST_SANDBOX === "true"
   ? "https://sandbox.payfast.co.za/eng/process"
   : "https://www.payfast.co.za/eng/process";
 
+/** PayFast custom integration field order (NOT alphabetical). See developers.payfast.co.za docs Step 2. */
+const PAYFAST_FIELD_ORDER = [
+  "merchant_id",
+  "merchant_key",
+  "return_url",
+  "cancel_url",
+  "notify_url",
+  "fica_idnumber",
+  "name_first",
+  "name_last",
+  "email_address",
+  "cell_number",
+  "m_payment_id",
+  "amount",
+  "item_name",
+  "item_description",
+  "custom_int1",
+  "custom_int2",
+  "custom_int3",
+  "custom_int4",
+  "custom_int5",
+  "custom_str1",
+  "custom_str2",
+  "custom_str3",
+  "custom_str4",
+  "custom_str5",
+  "email_confirmation",
+  "confirmation_address",
+  "payment_method",
+  "subscription_type",
+  "billing_date",
+  "recurring_amount",
+  "frequency",
+  "cycles",
+  "subscription_notify_email",
+  "subscription_notify_webhook",
+  "subscription_notify_buyer",
+] as const;
+
 export interface PayFastPaymentData {
   merchant_id: string;
   merchant_key: string;
@@ -24,11 +63,9 @@ export interface PayFastPaymentData {
   cycles?: string;
 }
 
-/** Match PHP urlencode: spaces as +, lowercase hex (required by PayFast signature). */
+/** PayFast requires RFC 1738-style encoding with + for spaces and uppercase hex (e.g. %3A). */
 function encodeValue(value: string): string {
-  return encodeURIComponent(value.trim())
-    .replace(/%20/g, "+")
-    .replace(/%[0-9A-F]{2}/g, (match) => match.toLowerCase());
+  return encodeURIComponent(value.trim()).replace(/%20/g, "+");
 }
 
 function getPayFastPassphrase(): string | undefined {
@@ -38,21 +75,39 @@ function getPayFastPassphrase(): string | undefined {
 
 export function generatePayFastSignature(
   data: Record<string, string>,
-  passphrase?: string
+  passphrase?: string,
+  fieldOrder: readonly string[] = PAYFAST_FIELD_ORDER
 ): string {
-  const sortedKeys = Object.keys(data)
-    .filter((key) => key !== "signature" && data[key] !== "")
-    .sort();
+  const parts: string[] = [];
 
-  const paramString = sortedKeys
-    .map((key) => `${key}=${encodeValue(data[key])}`)
-    .join("&");
+  for (const key of fieldOrder) {
+    if (key === "signature") continue;
+    const value = data[key];
+    if (value !== undefined && value !== "") {
+      parts.push(`${key}=${encodeValue(value)}`);
+    }
+  }
 
-  const stringToHash = passphrase
-    ? `${paramString}&passphrase=${encodeValue(passphrase)}`
-    : paramString;
+  let paramString = parts.join("&");
 
-  return crypto.createHash("md5").update(stringToHash).digest("hex");
+  if (passphrase) {
+    paramString += `&passphrase=${encodeValue(passphrase)}`;
+  }
+
+  return crypto.createHash("md5").update(paramString).digest("hex");
+}
+
+function orderFields(fields: Record<string, string>): Record<string, string> {
+  const ordered: Record<string, string> = {};
+  for (const key of PAYFAST_FIELD_ORDER) {
+    if (fields[key] !== undefined && fields[key] !== "") {
+      ordered[key] = fields[key];
+    }
+  }
+  if (fields.signature) {
+    ordered.signature = fields.signature;
+  }
+  return ordered;
 }
 
 export function buildPayFastFormData(
@@ -64,7 +119,7 @@ export function buildPayFastFormData(
   const merchantKey = process.env.PAYFAST_MERCHANT_KEY!.trim();
   const passphrase = getPayFastPassphrase();
 
-  const fields: Record<string, string> = {
+  const rawFields: Record<string, string> = {
     merchant_id: merchantId,
     merchant_key: merchantKey,
     return_url: payment.return_url,
@@ -76,20 +131,20 @@ export function buildPayFastFormData(
     item_name: payment.item_name,
   };
 
-  if (payment.name_first) fields.name_first = payment.name_first;
-  if (payment.name_last) fields.name_last = payment.name_last;
-  if (payment.item_description) fields.item_description = payment.item_description;
+  if (payment.name_first) rawFields.name_first = payment.name_first;
+  if (payment.name_last) rawFields.name_last = payment.name_last;
+  if (payment.item_description) rawFields.item_description = payment.item_description;
   if (payment.subscription_type) {
-    fields.subscription_type = payment.subscription_type;
-    if (payment.billing_date) fields.billing_date = payment.billing_date;
-    if (payment.recurring_amount) fields.recurring_amount = payment.recurring_amount;
-    if (payment.frequency) fields.frequency = payment.frequency;
-    if (payment.cycles) fields.cycles = payment.cycles;
+    rawFields.subscription_type = payment.subscription_type;
+    if (payment.billing_date) rawFields.billing_date = payment.billing_date;
+    if (payment.recurring_amount) rawFields.recurring_amount = payment.recurring_amount;
+    if (payment.frequency) rawFields.frequency = payment.frequency;
+    if (payment.cycles !== undefined) rawFields.cycles = payment.cycles;
   }
 
-  fields.signature = generatePayFastSignature(fields, passphrase);
+  rawFields.signature = generatePayFastSignature(rawFields, passphrase);
 
-  return { action: PAYFAST_URL, fields };
+  return { action: PAYFAST_URL, fields: orderFields(rawFields) };
 }
 
 export function verifyPayFastITN(
@@ -101,7 +156,11 @@ export function verifyPayFastITN(
   const data = { ...postData };
   delete data.signature;
 
-  const calculated = generatePayFastSignature(data, getPayFastPassphrase());
+  const calculated = generatePayFastSignature(
+    data,
+    getPayFastPassphrase(),
+    Object.keys(data)
+  );
 
   return calculated === receivedSignature;
 }
@@ -114,6 +173,7 @@ export function createSubscriptionPayment(params: {
   paymentId: string;
 }) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
+  const tierLabel = params.tierName.charAt(0).toUpperCase() + params.tierName.slice(1);
   return buildPayFastFormData({
     return_url: `${appUrl}/dashboard/billing?success=true`,
     cancel_url: `${appUrl}/dashboard/billing?cancelled=true`,
@@ -121,8 +181,8 @@ export function createSubscriptionPayment(params: {
     email_address: params.email,
     m_payment_id: params.paymentId,
     amount: params.amount,
-    item_name: `Find My Biz ${params.tierName} Membership`,
-    item_description: `Monthly subscription for ${params.tierName} tier`,
+    item_name: `Find My Biz ${tierLabel} Membership`,
+    item_description: `Monthly subscription for ${tierLabel} tier`,
     subscription_type: "1",
     billing_date: new Date().toISOString().split("T")[0],
     recurring_amount: params.amount.toFixed(2),
