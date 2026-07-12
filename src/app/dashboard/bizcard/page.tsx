@@ -1,15 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { BizCardGenerator } from "./bizcard-client";
+import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
 
 export default async function BizCardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("slug, name, membership_tier")
-    .eq("owner_id", user!.id)
-    .single();
+  const business = await getOwnerPrimaryBusiness(user!.id);
 
   if (!business) return <p>Register a business first.</p>;
 

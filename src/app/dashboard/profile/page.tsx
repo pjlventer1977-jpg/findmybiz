@@ -1,15 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "./profile-form";
+import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
 
 export default async function DashboardProfilePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id, name, description, phone, email, status, slug, logo_url")
-    .eq("owner_id", user!.id)
-    .single();
+  const business = await getOwnerPrimaryBusiness(user!.id);
 
   if (!business) return <p>Register a business first.</p>;
 

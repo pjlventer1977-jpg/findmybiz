@@ -6,18 +6,15 @@ import { TrustBadge } from "@/components/business/business-card";
 import { formatCurrency } from "@/lib/utils";
 import { getLeadCreditsAllocation } from "@/lib/lead-credits";
 import { getPlanByTier } from "@/constants/membership";
+import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select(`*, lead_credits(balance, monthly_allocation)`)
-    .eq("owner_id", user!.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .single();
+  const business = await getOwnerPrimaryBusiness(user!.id);
 
   if (!business) {
     return (

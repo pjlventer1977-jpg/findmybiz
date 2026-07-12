@@ -1,15 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
 
 export default async function AnalyticsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id, name, profile_views, search_appearances, membership_tier")
-    .eq("owner_id", user!.id)
-    .single();
+  const business = await getOwnerPrimaryBusiness(user!.id);
 
   if (!business) return <p>Register a business first.</p>;
 

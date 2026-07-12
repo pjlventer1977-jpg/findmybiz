@@ -3,16 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildWhatsAppLink } from "@/lib/utils";
 import { buildWhatsAppLeadMessage } from "@/lib/lead-router";
+import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
 
 export default async function LeadsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id, whatsapp, phone")
-    .eq("owner_id", user!.id)
-    .single();
+  const business = await getOwnerPrimaryBusiness(user!.id);
 
   if (!business) {
     return <p>Register a business first.</p>;

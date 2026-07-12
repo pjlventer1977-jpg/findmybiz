@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getLeadCreditsBalance } from "@/lib/lead-credits";
+import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
+
+export const dynamic = "force-dynamic";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -34,13 +37,7 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/login?redirect=/dashboard");
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("name, membership_tier, lead_credits(balance)")
-    .eq("owner_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .single();
+  const business = await getOwnerPrimaryBusiness(user.id);
 
   return (
     <div className="container mx-auto px-4 py-8">
