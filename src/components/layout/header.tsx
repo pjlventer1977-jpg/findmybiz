@@ -1,8 +1,15 @@
 import Link from "next/link";
 import { Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/server";
+import { SignOutButton } from "@/components/layout/sign-out-button";
 
-export function Header() {
+export async function Header() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -40,12 +47,23 @@ export function Header() {
           <Button variant="ghost" size="icon" className="md:hidden" aria-label="Menu">
             <Menu className="h-5 w-5" />
           </Button>
-          <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
-            <Link href="/login">Sign In</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/register">List Your Business</Link>
-          </Button>
+          {user ? (
+            <>
+              <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+              <SignOutButton />
+            </>
+          ) : (
+            <>
+              <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
+                <Link href="/login">Sign In</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/register">List Your Business</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>
