@@ -15,6 +15,8 @@ export default async function DashboardPage() {
     .from("businesses")
     .select(`*, lead_credits(balance, monthly_allocation)`)
     .eq("owner_id", user!.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
     .single();
 
   if (!business) {

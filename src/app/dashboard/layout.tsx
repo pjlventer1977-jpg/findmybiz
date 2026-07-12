@@ -38,7 +38,7 @@ export default async function DashboardLayout({
     .from("businesses")
     .select("name, membership_tier, lead_credits(balance)")
     .eq("owner_id", user.id)
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: true })
     .limit(1)
     .single();
 

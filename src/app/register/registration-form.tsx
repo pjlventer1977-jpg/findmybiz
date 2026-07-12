@@ -39,12 +39,14 @@ export function BusinessRegistrationForm({
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) router.push("/login?redirect=/register");
+      else setUserEmail(user.email ?? null);
     });
   }, [router]);
 
@@ -160,13 +162,19 @@ export function BusinessRegistrationForm({
     await supabase
       .from("profiles")
       .update({ role: "business_owner" })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .neq("role", "admin");
 
     router.push("/dashboard?registered=true");
   }
 
   return (
     <div className="max-w-2xl mx-auto">
+      {userEmail && (
+        <div className="mb-4 rounded-lg border bg-muted/50 px-4 py-3 text-sm">
+          Registering as: <span className="font-medium">{userEmail}</span>
+        </div>
+      )}
       <div className="flex gap-2 mb-8">
         {[1, 2, 3, 4].map((s) => (
           <div
