@@ -13,16 +13,32 @@ interface BillingClientProps {
 
 export function BillingClient({ businessId, currentTier }: BillingClientProps) {
   const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function initiatePayment(type: string, data: Record<string, unknown>) {
     setLoading(type);
+    setError(null);
+
     try {
       const res = await fetch("/api/payments/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, business_id: businessId, ...data }),
       });
+
       const formData = await res.json();
+
+      if (!res.ok) {
+        setError(formData.error ?? "Could not start payment. Please try again.");
+        setLoading(null);
+        return;
+      }
+
+      if (!formData.action || !formData.fields) {
+        setError("Invalid payment response from server.");
+        setLoading(null);
+        return;
+      }
 
       const form = document.createElement("form");
       form.method = "POST";
@@ -37,12 +53,19 @@ export function BillingClient({ businessId, currentTier }: BillingClientProps) {
       document.body.appendChild(form);
       form.submit();
     } catch {
+      setError("Could not connect to payment service. Please try again.");
       setLoading(null);
     }
   }
 
   return (
     <div className="space-y-8">
+      {error && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <section>
         <h2 className="text-xl font-semibold mb-4">Membership Plans</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -71,7 +94,11 @@ export function BillingClient({ businessId, currentTier }: BillingClientProps) {
                     })
                   }
                 >
-                  {currentTier === plan.tier ? "Current Plan" : "Upgrade"}
+                  {loading === plan.tier
+                    ? "Redirecting..."
+                    : currentTier === plan.tier
+                      ? "Current Plan"
+                      : "Upgrade"}
                 </Button>
               </CardContent>
             </Card>
@@ -100,7 +127,7 @@ export function BillingClient({ businessId, currentTier }: BillingClientProps) {
                     })
                   }
                 >
-                  Buy
+                  {loading === `credits-${pack.credits}` ? "Redirecting..." : "Buy"}
                 </Button>
               </CardContent>
             </Card>
