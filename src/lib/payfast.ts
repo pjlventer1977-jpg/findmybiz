@@ -24,8 +24,16 @@ export interface PayFastPaymentData {
   cycles?: string;
 }
 
+/** Match PHP urlencode: spaces as +, lowercase hex (required by PayFast signature). */
 function encodeValue(value: string): string {
-  return encodeURIComponent(value.trim()).replace(/%20/g, "+");
+  return encodeURIComponent(value.trim())
+    .replace(/%20/g, "+")
+    .replace(/%[0-9A-F]{2}/g, (match) => match.toLowerCase());
+}
+
+function getPayFastPassphrase(): string | undefined {
+  const passphrase = process.env.PAYFAST_PASSPHRASE?.trim();
+  return passphrase || undefined;
 }
 
 export function generatePayFastSignature(
@@ -52,9 +60,9 @@ export function buildPayFastFormData(
     amount: number;
   }
 ): { action: string; fields: Record<string, string> } {
-  const merchantId = process.env.PAYFAST_MERCHANT_ID!;
-  const merchantKey = process.env.PAYFAST_MERCHANT_KEY!;
-  const passphrase = process.env.PAYFAST_PASSPHRASE;
+  const merchantId = process.env.PAYFAST_MERCHANT_ID!.trim();
+  const merchantKey = process.env.PAYFAST_MERCHANT_KEY!.trim();
+  const passphrase = getPayFastPassphrase();
 
   const fields: Record<string, string> = {
     merchant_id: merchantId,
@@ -93,10 +101,7 @@ export function verifyPayFastITN(
   const data = { ...postData };
   delete data.signature;
 
-  const calculated = generatePayFastSignature(
-    data,
-    process.env.PAYFAST_PASSPHRASE
-  );
+  const calculated = generatePayFastSignature(data, getPayFastPassphrase());
 
   return calculated === receivedSignature;
 }
