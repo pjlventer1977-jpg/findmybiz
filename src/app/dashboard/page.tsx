@@ -36,6 +36,11 @@ export default async function DashboardPage() {
     .eq("business_id", business.id)
     .eq("status", "new");
 
+  const { count: totalLeads } = await supabase
+    .from("leads")
+    .select("*", { count: "exact", head: true })
+    .eq("business_id", business.id);
+
   const plan = getPlanByTier(business.membership_tier);
   const credits = getLeadCreditsAllocation(business.lead_credits);
 
@@ -55,15 +60,27 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">New Leads</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{newLeads ?? 0}</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Link href="/dashboard/leads" className="block">
+          <Card className="h-full transition-colors hover:bg-muted/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">New Leads</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{newLeads ?? 0}</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/dashboard/leads/received" className="block">
+          <Card className="h-full transition-colors hover:bg-muted/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Total Leads Received</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{totalLeads ?? 0}</p>
+            </CardContent>
+          </Card>
+        </Link>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Lead Credits</CardTitle>

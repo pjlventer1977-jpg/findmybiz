@@ -9,6 +9,7 @@ import {
   QrCode,
   Settings,
   Users,
+  Inbox,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getLeadCreditsBalance } from "@/lib/lead-credits";
@@ -19,6 +20,7 @@ export const dynamic = "force-dynamic";
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/leads", label: "Leads", icon: Users },
+  { href: "/dashboard/leads/received", label: "Total Leads Received", icon: Inbox },
   { href: "/dashboard/profile", label: "Profile", icon: Settings },
   { href: "/dashboard/specials", label: "Specials", icon: Tag },
   { href: "/dashboard/events", label: "Events", icon: Calendar },
