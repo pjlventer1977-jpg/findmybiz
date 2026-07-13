@@ -72,6 +72,21 @@ export async function searchBusinesses(params: {
   offset?: number;
 }): Promise<Business[]> {
   const supabase = await createClient();
+  let categoryBusinessIds: string[] | null = null;
+
+  if (params.category) {
+    const category = await getCategoryBySlug(params.category);
+    if (!category) return [];
+
+    const { data: categoryLinks } = await supabase
+      .from("business_categories")
+      .select("business_id")
+      .eq("category_id", category.id);
+
+    categoryBusinessIds = categoryLinks?.map((row) => row.business_id) ?? [];
+    if (categoryBusinessIds.length === 0) return [];
+  }
+
   let query = supabase
     .from("businesses")
     .select(`
@@ -81,6 +96,10 @@ export async function searchBusinesses(params: {
       categories:business_categories(category:categories(*))
     `)
     .eq("status", "approved");
+
+  if (categoryBusinessIds) {
+    query = query.in("id", categoryBusinessIds);
+  }
 
   if (params.province) {
     const prov = await getProvinceBySlug(params.province);

@@ -8,8 +8,10 @@ import {
   Hammer,
   HeartPulse,
   Home,
+  Leaf,
   MapPin,
   MessageCircle,
+  Monitor,
   Scissors,
   ShieldCheck,
   Sparkles,
@@ -46,6 +48,43 @@ export const CATEGORY_ICONS: LucideIcon[] = [
   Scissors,
   CircleEllipsis,
 ];
+
+const CATEGORY_ICON_BY_SLUG: Record<string, LucideIcon> = {
+  automotive: Car,
+  "automotive-parts": Car,
+  "building-construction": Hammer,
+  "business-services": BriefcaseBusiness,
+  "cleaning-services": Sparkles,
+  "education-training": GraduationCap,
+  "electrical-services": Hammer,
+  "events-entertainment": Calendar,
+  "financial-services": BriefcaseBusiness,
+  "food-beverage": Home,
+  "health-medical": HeartPulse,
+  "home-garden": Home,
+  "hospitality-tourism": MapPin,
+  "it-technology": Monitor,
+  "legal-services": Gavel,
+  "manufacturing": Hammer,
+  "marketing-advertising": BriefcaseBusiness,
+  "plumbing-services": Hammer,
+  "real-estate": Home,
+  "retail-shopping": BriefcaseBusiness,
+  "security-services": ShieldCheck,
+  "transport-logistics": Truck,
+  "beauty-wellness": Scissors,
+  "agriculture-farming": Leaf,
+  "photography-video": Star,
+  consulting: BriefcaseBusiness,
+};
+
+export function getCategoryIcon(slug: string, fallbackIndex: number): LucideIcon {
+  return (
+    CATEGORY_ICON_BY_SLUG[slug] ??
+    CATEGORY_ICONS[fallbackIndex % CATEGORY_ICONS.length] ??
+    CircleEllipsis
+  );
+}
 
 export const TRUST_BENEFITS = [
   {

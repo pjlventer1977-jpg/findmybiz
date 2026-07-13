@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { CircleEllipsis, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { CategoryCard } from "@/components/home/cards/category-card";
 import { SectionShell } from "@/components/home/section-shell";
 import { Button } from "@/components/ui/button";
-import { CATEGORY_ICONS } from "@/data/homepage";
+import { getCategoryIcon } from "@/data/homepage";
 import type { Category } from "@/types";
 
 const INITIAL_VISIBLE = 12;
@@ -59,7 +59,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
         {categories.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {visibleCategories.map((category, index) => {
-              const Icon = CATEGORY_ICONS[index % CATEGORY_ICONS.length] ?? CircleEllipsis;
+              const Icon = getCategoryIcon(category.slug, index);
               return (
                 <CategoryCard
                   key={category.id}

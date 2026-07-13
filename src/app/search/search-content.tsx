@@ -1,4 +1,4 @@
-import { searchBusinesses, getProvinces, getCategories } from "@/lib/queries/public";
+import { searchBusinesses, getProvinces, getCategories, getCategoryBySlug } from "@/lib/queries/public";
 import { BusinessCard } from "@/components/business/business-card";
 import { SearchAppearanceTracker } from "@/components/analytics/search-appearance-tracker";
 import { SearchFilters } from "./search-filters";
@@ -13,7 +13,7 @@ interface SearchPageContentProps {
 }
 
 export async function SearchPageContent({ params }: SearchPageContentProps) {
-  const [businesses, provinces, categories] = await Promise.all([
+  const [businesses, provinces, categories, activeCategory] = await Promise.all([
     searchBusinesses({
       q: params.q,
       province: params.province,
@@ -22,7 +22,10 @@ export async function SearchPageContent({ params }: SearchPageContentProps) {
     }),
     getProvinces(),
     getCategories(),
+    params.category ? getCategoryBySlug(params.category) : Promise.resolve(null),
   ]);
+
+  const categoryLabel = activeCategory?.name;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -34,6 +37,7 @@ export async function SearchPageContent({ params }: SearchPageContentProps) {
       <p className="mb-6 text-muted-foreground">
         {businesses.length} verified businesses found
         {params.q && ` for "${params.q}"`}
+        {categoryLabel && ` in ${categoryLabel}`}
       </p>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
