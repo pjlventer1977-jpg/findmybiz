@@ -25,13 +25,13 @@ export async function SearchPageContent({ params }: SearchPageContentProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2">Find Businesses</h1>
-      <p className="text-muted-foreground mb-6">
+      <h1 className="mb-2 text-3xl font-bold text-sa-blue">Find Businesses</h1>
+      <p className="mb-6 text-muted-foreground">
         {businesses.length} verified businesses found
         {params.q && ` for "${params.q}"`}
       </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <aside className="lg:col-span-1">
           <SearchFilters
             provinces={provinces}
@@ -40,15 +40,17 @@ export async function SearchPageContent({ params }: SearchPageContentProps) {
           />
         </aside>
 
-        <div className="lg:col-span-3 space-y-4">
+        <div className="lg:col-span-3">
           {businesses.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="py-12 text-center text-muted-foreground">
               <p>No businesses found. Try adjusting your filters.</p>
             </div>
           ) : (
-            businesses.map((business) => (
-              <BusinessCard key={business.id} business={business} />
-            ))
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {businesses.map((business) => (
+                <BusinessCard key={business.id} business={business} compact />
+              ))}
+            </div>
           )}
         </div>
       </div>

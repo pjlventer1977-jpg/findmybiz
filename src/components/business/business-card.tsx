@@ -16,9 +16,10 @@ import type { Business } from "@/types";
 interface BusinessCardProps {
   business: Business;
   className?: string;
+  compact?: boolean;
 }
 
-export function BusinessCard({ business, className }: BusinessCardProps) {
+export function BusinessCard({ business, className, compact = false }: BusinessCardProps) {
   const trust = getTrustBadgeLabel(business.biz_trust_score);
   const rating = Math.max(3.8, Math.min(5, business.biz_trust_score / 20));
   const location = [business.city?.name, business.province?.name].filter(Boolean).join(", ");
@@ -33,7 +34,12 @@ export function BusinessCard({ business, className }: BusinessCardProps) {
       )}
     >
       <Link href={`/business/${business.slug}`} className="block">
-        <div className="relative h-32 bg-gradient-to-br from-sa-blue via-sa-green to-sa-blue/80">
+        <div
+          className={cn(
+            "relative bg-gradient-to-br from-sa-blue via-sa-green to-sa-blue/80",
+            compact ? "h-24" : "h-32"
+          )}
+        >
           {business.logo_url && (
             <Image
               src={business.logo_url}
@@ -58,17 +64,20 @@ export function BusinessCard({ business, className }: BusinessCardProps) {
         </div>
       </Link>
 
-      <div className="relative p-4 pt-8">
+      <div className={cn("relative", compact ? "p-3 pt-7" : "p-4 pt-8")}>
         <Link
           href={`/business/${business.slug}`}
-          className="absolute -top-8 left-4 flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border-4 border-white bg-white shadow-md"
+          className={cn(
+            "absolute flex items-center justify-center overflow-hidden rounded-xl border-4 border-white bg-white shadow-md",
+            compact ? "-top-6 left-3 h-12 w-12" : "-top-8 left-4 h-14 w-14"
+          )}
         >
           {business.logo_url ? (
             <Image
               src={business.logo_url}
               alt={business.name}
-              width={56}
-              height={56}
+              width={compact ? 48 : 56}
+              height={compact ? 48 : 56}
               className="h-full w-full object-cover"
             />
           ) : (
@@ -100,7 +109,8 @@ export function BusinessCard({ business, className }: BusinessCardProps) {
           <span
             className={cn(
               "rounded-full px-2 py-0.5 text-[10px] font-semibold text-white",
-              trust.color
+              trust.color,
+              compact && "hidden sm:inline-flex"
             )}
           >
             {trust.label}
@@ -114,7 +124,7 @@ export function BusinessCard({ business, className }: BusinessCardProps) {
           </p>
         )}
 
-        {business.is_local_champion && (
+        {business.is_local_champion && !compact && (
           <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-sa-gold/20 px-2 py-1 text-xs font-semibold text-sa-blue">
             <Crown className="h-3 w-3" /> Local Champion
           </div>
