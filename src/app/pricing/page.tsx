@@ -1,68 +1,219 @@
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MEMBERSHIP_PLANS, LEAD_CREDIT_PACKS } from "@/constants/membership";
-import { formatCurrency } from "@/lib/utils";
+import {
+  LEAD_CREDIT_PACKS,
+  MEMBERSHIP_PLANS,
+  type MembershipTier,
+} from "@/constants/membership";
+import { cn, formatCurrency } from "@/lib/utils";
 
 export const metadata = {
   title: "Pricing",
   description: "Find My Biz membership plans for South African businesses.",
 };
 
+const ALL_PLANS_INCLUDE = [
+  "Verified listing",
+  "Email lead delivery",
+  "Dashboard lead inbox",
+  "SA-wide coverage",
+] as const;
+
+function formatPlanLimit(value: number, unlimitedAt = 999): string {
+  return value >= unlimitedAt ? "Unlimited" : String(value);
+}
+
+function priorityRoutingLabel(tier: MembershipTier): string {
+  switch (tier) {
+    case "enterprise":
+      return "Highest";
+    case "professional":
+      return "Priority";
+    case "starter":
+      return "Improved";
+    default:
+      return "Standard";
+  }
+}
+
+function leadsLabel(count: number): string {
+  return count === 1 ? "1 lead per month" : `${count} leads per month`;
+}
+
 export default function PricingPage() {
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h1>
-        <p className="text-muted-foreground max-w-xl mx-auto">
-          Choose the plan that fits your business. All plans include verified listing and lead delivery.
+    <div className="container mx-auto px-4 py-10 sm:py-12">
+      <div className="mx-auto mb-10 max-w-3xl text-center">
+        <h1 className="text-3xl font-bold text-sa-blue sm:text-4xl">
+          Simple, Transparent Pricing
+        </h1>
+        <p className="mt-3 text-base font-medium text-sa-green sm:text-lg">
+          Each lead is a customer enquiry from Get 5 Quotes — delivered to your
+          email and dashboard.
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Choose the plan that fits your business. Scale up as your lead volume
+          grows.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-16">
-        {MEMBERSHIP_PLANS.map((plan) => (
-          <Card
-            key={plan.tier}
-            className={plan.tier === "professional" ? "border-primary shadow-lg scale-105" : ""}
-          >
-            <CardHeader>
-              {plan.tier === "professional" && (
-                <span className="text-xs bg-primary text-white px-2 py-1 rounded w-fit mb-2">
-                  Most Popular
-                </span>
-              )}
-              <CardTitle>{plan.name}</CardTitle>
-              <p className="text-3xl font-bold">
-                {plan.price === 0 ? "Free" : formatCurrency(plan.price)}
-                {plan.price > 0 && <span className="text-sm font-normal">/mo</span>}
-              </p>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm mb-6">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex gap-2">
-                    <span className="text-primary">✓</span> {f}
-                  </li>
-                ))}
-              </ul>
-              <Button className="w-full" asChild variant={plan.tier === "professional" ? "default" : "outline"}>
-                <Link href="/register">
-                  {plan.price === 0 ? "Get Started" : "Choose Plan"}
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="mx-auto mb-10 max-w-5xl rounded-2xl border border-sa-green/20 bg-gradient-to-r from-sa-green/5 via-white to-sa-gold/5 px-4 py-4 sm:px-6">
+        <p className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-sa-blue">
+          All plans include
+        </p>
+        <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          {ALL_PLANS_INCLUDE.map((item) => (
+            <li
+              key={item}
+              className="flex items-center gap-2 text-sm font-medium text-slate-700"
+            >
+              <Check className="h-4 w-4 shrink-0 text-sa-green" aria-hidden />
+              {item}
+            </li>
+          ))}
+        </ul>
       </div>
 
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold mb-4">Lead Credit Top-Ups</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+      <div className="mx-auto mb-16 grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {MEMBERSHIP_PLANS.map((plan) => {
+          const isPopular = plan.tier === "professional";
+
+          return (
+            <Card
+              key={plan.tier}
+              className={cn(
+                "flex flex-col",
+                isPopular && "border-sa-gold shadow-lg ring-1 ring-sa-gold/30 lg:scale-[1.02]"
+              )}
+            >
+              <CardHeader className="pb-3">
+                {isPopular && (
+                  <span className="mb-2 w-fit rounded-full bg-sa-gold px-2.5 py-0.5 text-xs font-bold text-slate-900">
+                    Most Popular
+                  </span>
+                )}
+                <CardTitle className="text-sa-blue">{plan.name}</CardTitle>
+                <p
+                  className={cn(
+                    "text-2xl font-bold leading-tight sm:text-3xl",
+                    isPopular ? "text-sa-gold" : "text-sa-green"
+                  )}
+                >
+                  {leadsLabel(plan.leadsPerMonth)}
+                </p>
+                <p className="text-2xl font-bold text-slate-900">
+                  {plan.price === 0 ? "Free" : formatCurrency(plan.price)}
+                  {plan.price > 0 && (
+                    <span className="text-sm font-normal text-muted-foreground">
+                      /mo
+                    </span>
+                  )}
+                </p>
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col">
+                <ul className="mb-6 flex-1 space-y-2 text-sm">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex gap-2 text-slate-700">
+                      <Check
+                        className="mt-0.5 h-4 w-4 shrink-0 text-sa-green"
+                        aria-hidden
+                      />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className={cn(
+                    "w-full font-semibold",
+                    isPopular && "bg-sa-gold text-slate-900 hover:bg-sa-gold/90"
+                  )}
+                  asChild
+                  variant={isPopular ? "default" : "outline"}
+                >
+                  <Link href="/register">
+                    {plan.price === 0 ? "Get Started" : "Choose Plan"}
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="mx-auto mb-16 max-w-5xl">
+        <h2 className="mb-2 text-center text-2xl font-bold text-sa-blue">
+          Compare plans
+        </h2>
+        <p className="mb-6 text-center text-sm text-muted-foreground">
+          See how lead volume and visibility grow across tiers.
+        </p>
+        <div className="overflow-x-auto rounded-xl border border-slate-200">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead>
+              <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <th className="px-4 py-3 font-semibold">Plan</th>
+                <th className="px-4 py-3 font-semibold">Leads / month</th>
+                <th className="px-4 py-3 font-semibold">Categories</th>
+                <th className="px-4 py-3 font-semibold">Specials / month</th>
+                <th className="px-4 py-3 font-semibold">Lead routing</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MEMBERSHIP_PLANS.map((plan) => (
+                <tr
+                  key={plan.tier}
+                  className={cn(
+                    "border-b last:border-0",
+                    plan.tier === "professional" && "bg-sa-gold/5"
+                  )}
+                >
+                  <td className="px-4 py-3 font-semibold text-sa-blue">
+                    {plan.name}
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-sa-green">
+                    {plan.leadsPerMonth}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {formatPlanLimit(plan.categoriesLimit)}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {formatPlanLimit(plan.specialsPerMonth)}
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {priorityRoutingLabel(plan.tier)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-3xl text-center">
+        <h2 className="mb-3 text-2xl font-bold text-sa-blue">Lead Credit Top-Ups</h2>
+        <p className="mx-auto mb-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+          Need more enquiries after your monthly allowance? Buy lead credits anytime.
+          <strong className="font-semibold text-slate-800"> 1 credit = 1 extra lead</strong>{" "}
+          — each credit unlocks one additional Get 5 Quotes enquiry routed to your
+          inbox when your plan&apos;s monthly leads are used up.
+        </p>
+        <p className="mb-8 text-xs text-muted-foreground">
+          Credits never replace your plan allowance — they extend it when you&apos;re
+          busy.
+        </p>
+        <div className="mx-auto grid max-w-2xl grid-cols-2 gap-4 md:grid-cols-4">
           {LEAD_CREDIT_PACKS.map((pack) => (
-            <div key={pack.credits} className="p-4 border rounded-lg">
-              <p className="text-2xl font-bold">{pack.credits}</p>
-              <p className="text-sm text-muted-foreground">credits</p>
-              <p className="font-semibold">{formatCurrency(pack.price)}</p>
+            <div
+              key={pack.credits}
+              className="rounded-xl border border-sa-gold/30 bg-gradient-to-b from-sa-gold/10 to-white p-4"
+            >
+              <p className="text-2xl font-bold text-sa-blue">{pack.credits}</p>
+              <p className="text-sm text-muted-foreground">lead credits</p>
+              <p className="mt-1 font-semibold text-slate-900">
+                {formatCurrency(pack.price)}
+              </p>
             </div>
           ))}
         </div>

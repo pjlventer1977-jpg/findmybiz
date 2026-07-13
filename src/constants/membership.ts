@@ -23,7 +23,6 @@ export const MEMBERSHIP_PLANS: MembershipPlan[] = [
       "Verified listing",
       "Company logo & contact details",
       "Basic search visibility",
-      "1 lead per month",
     ],
   },
   {
