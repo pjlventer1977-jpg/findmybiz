@@ -73,6 +73,12 @@ export function Footer() {
                 </a>
               ))}
             </div>
+            <Link
+              href="/register"
+              className="mt-4 inline-flex rounded-lg bg-sa-gold px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-sa-gold/90"
+            >
+              Register Your Business
+            </Link>
           </div>
 
           <div>

@@ -67,6 +67,13 @@ export async function Header() {
               >
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
+              <Button
+                size="sm"
+                asChild
+                className="rounded-md bg-sa-blue px-3 text-sm font-semibold text-white hover:bg-sa-blue/90 sm:px-4"
+              >
+                <Link href="/register">List Your Business</Link>
+              </Button>
               <SignOutButton />
             </>
           ) : (
