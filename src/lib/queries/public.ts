@@ -142,14 +142,21 @@ export async function getFeaturedBusinesses(limit = 6): Promise<Business[]> {
     .select(`
       *,
       province:provinces(*),
-      city:cities(*)
+      city:cities(*),
+      categories:business_categories(category:categories(*))
     `)
     .eq("status", "approved")
     .or("is_featured.eq.true,membership_tier.eq.enterprise")
     .order("biz_trust_score", { ascending: false })
     .limit(limit);
 
-  return data ?? [];
+  return (data ?? []).map((business) => ({
+    ...business,
+    categories:
+      business.categories?.map(
+        (entry: { category: Category }) => entry.category
+      ) ?? [],
+  }));
 }
 
 export async function getLatestSpecials(limit = 6): Promise<Special[]> {
@@ -195,4 +202,32 @@ export async function getPopularCategories(limit = 12): Promise<Category[]> {
     .limit(limit);
 
   return data ?? [];
+}
+
+export async function getHomepageStats(): Promise<{
+  businesses: number;
+  categories: number;
+  quotes: number;
+  provinces: number;
+}> {
+  const supabase = await createClient();
+
+  const [
+    { count: businesses },
+    { count: categories },
+    { count: quotes },
+    { count: provinces },
+  ] = await Promise.all([
+    supabase.from("businesses").select("*", { count: "exact", head: true }).eq("status", "approved"),
+    supabase.from("categories").select("*", { count: "exact", head: true }),
+    supabase.from("quote_requests").select("*", { count: "exact", head: true }),
+    supabase.from("provinces").select("*", { count: "exact", head: true }),
+  ]);
+
+  return {
+    businesses: businesses ?? 0,
+    categories: categories ?? 0,
+    quotes: quotes ?? 0,
+    provinces: provinces ?? 9,
+  };
 }
