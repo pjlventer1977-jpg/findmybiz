@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "@/components/layout/sign-out-button";
+import { MobileNav } from "@/components/layout/mobile-nav";
 
 const NAV_LINKS = [
   { href: "/search", label: "Find Businesses" },
@@ -21,15 +21,15 @@ export async function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <Link href="/" className="flex min-w-0 shrink-0 items-center gap-3">
+      <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
           <Image
             src="/findmybiz-logo-transparent.png"
             alt="FindMyBiz"
             width={140}
             height={42}
             priority
-            className="h-10 w-auto object-contain sm:h-11"
+            className="h-9 w-auto object-contain sm:h-11"
           />
           <span className="hidden min-w-0 border-l border-slate-200 pl-3 lg:block">
             <span className="block text-[10px] font-bold uppercase tracking-wider text-sa-blue">
@@ -53,10 +53,8 @@ export async function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="xl:hidden" aria-label="Open menu">
-            <Menu className="h-5 w-5" />
-          </Button>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <MobileNav isLoggedIn={!!user} />
           {user ? (
             <>
               <Button
@@ -70,11 +68,13 @@ export async function Header() {
               <Button
                 size="sm"
                 asChild
-                className="rounded-md bg-sa-blue px-3 text-sm font-semibold text-white hover:bg-sa-blue/90 sm:px-4"
+                className="hidden rounded-md bg-sa-blue px-3 text-sm font-semibold text-white hover:bg-sa-blue/90 sm:inline-flex sm:px-4"
               >
                 <Link href="/register">List Your Business</Link>
               </Button>
-              <SignOutButton />
+              <div className="hidden sm:block">
+                <SignOutButton />
+              </div>
             </>
           ) : (
             <>
@@ -89,7 +89,7 @@ export async function Header() {
               <Button
                 size="sm"
                 asChild
-                className="rounded-md bg-sa-blue px-4 text-sm font-semibold text-white hover:bg-sa-blue/90"
+                className="hidden rounded-md bg-sa-blue px-4 text-sm font-semibold text-white hover:bg-sa-blue/90 sm:inline-flex"
               >
                 <Link href="/register">Register</Link>
               </Button>

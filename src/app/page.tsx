@@ -1,4 +1,5 @@
 import { HeroSectionAsync } from "@/components/home/sections/hero-section-async";
+import { CategoriesSectionAsync } from "@/components/home/sections/categories-section-async";
 import { TrustBenefitsStrip } from "@/components/home/sections/trust-benefits-strip";
 import { FeaturedQuotesSectionAsync } from "@/components/home/sections/featured-quotes-section-async";
 import { SpecialsEventsSectionAsync } from "@/components/home/sections/specials-events-section-async";
@@ -12,6 +13,7 @@ export default function HomePage() {
   return (
     <>
       <HeroSectionAsync />
+      <CategoriesSectionAsync />
       <TrustBenefitsStrip />
       <FeaturedQuotesSectionAsync />
       <SpecialsEventsSectionAsync />
