@@ -1,24 +1,37 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { SectionShell } from "@/components/home/section-shell";
 import { SaProvinceMap } from "@/components/home/sa-province-map";
-import { SA_PROVINCES } from "@/data/homepage";
+import { PROVINCES_SECTION_BACKGROUND, SA_PROVINCES } from "@/data/homepage";
 import { cn } from "@/lib/utils";
 
 export function ProvincesSection() {
   const [activeProvince, setActiveProvince] = useState<string | null>(null);
 
   return (
-    <section className="bg-slate-50 py-10 sm:py-12">
-      <SectionShell>
+    <section className="relative min-h-[400px] overflow-hidden py-10 sm:min-h-[440px] sm:py-12">
+      <Image
+        src={PROVINCES_SECTION_BACKGROUND}
+        alt=""
+        fill
+        className="object-cover object-center"
+        sizes="100vw"
+      />
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/92 via-white/85 to-white/75"
+        aria-hidden
+      />
+
+      <SectionShell className="relative z-10">
         <h2 className="mb-6 text-2xl font-bold text-sa-blue">
           Find Businesses in Your Province
         </h2>
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-          <div className="flex min-h-[280px] flex-col justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex min-h-[280px] flex-col justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm backdrop-blur-sm sm:p-6">
             <SaProvinceMap
               className="mx-auto w-full flex-1"
               activeSlug={activeProvince}
@@ -26,7 +39,7 @@ export function ProvincesSection() {
             />
           </div>
 
-          <ul className="divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <ul className="divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white/95 shadow-sm backdrop-blur-sm">
             {SA_PROVINCES.map((province) => (
               <li key={province.slug}>
                 <Link

@@ -26,6 +26,8 @@ import {
 
 export const HERO_BACKGROUND_IMAGE = "/hero-proudly-south-african.png";
 
+export const PROVINCES_SECTION_BACKGROUND = "/provinces-cape-town-sa.png";
+
 export const POPULAR_SEARCHES = [
   { label: "Plumbers", query: "plumber" },
   { label: "Electricians", query: "electrician" },
