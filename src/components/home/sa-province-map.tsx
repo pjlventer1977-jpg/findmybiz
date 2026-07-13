@@ -61,7 +61,7 @@ export function SaProvinceMap({
                   stroke={isActive ? "#007A4D" : "rgba(0, 122, 77, 0)"}
                   strokeWidth={isActive ? 2.5 : 0}
                   className="cursor-pointer transition-all duration-200 ease-out"
-                  fillRule={province.slug === "free-state" ? "evenodd" : "nonzero"}
+                  fillRule="evenodd"
                 >
                   <title>{province.name}</title>
                 </path>
