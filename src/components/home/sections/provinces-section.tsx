@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ChevronRight, MapPin } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { SectionShell } from "@/components/home/section-shell";
+import { SaProvinceMap } from "@/components/home/sa-province-map";
 import { SA_PROVINCES } from "@/data/homepage";
 
 export function ProvincesSection() {
@@ -11,25 +12,8 @@ export function ProvincesSection() {
           Find Businesses in Your Province
         </h2>
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-          <div className="relative min-h-[280px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="absolute inset-8 rounded-[38%] bg-sa-green/10" />
-            <div className="absolute inset-12 rounded-[42%] border-2 border-dashed border-sa-green/25" />
-            {SA_PROVINCES.map((province, index) => (
-              <span
-                key={province.slug}
-                className="absolute flex h-6 w-6 items-center justify-center rounded-full bg-sa-green text-white shadow-sm"
-                style={{
-                  left: `${12 + ((index * 19) % 72)}%`,
-                  top: `${14 + ((index * 13) % 68)}%`,
-                }}
-                title={province.name}
-              >
-                <MapPin className="h-3 w-3" aria-hidden />
-              </span>
-            ))}
-            <p className="absolute bottom-4 left-4 text-xs font-medium text-muted-foreground">
-              Businesses across all 9 provinces
-            </p>
+          <div className="flex min-h-[280px] flex-col justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <SaProvinceMap className="mx-auto w-full max-w-md flex-1" />
           </div>
 
           <ul className="divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white shadow-sm">
