@@ -24,7 +24,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-export const HERO_BACKGROUND_IMAGE = "/hero-johannesburg-skyline.png";
+export const HERO_BACKGROUND_IMAGE = "/hero-proudly-south-african.png";
 
 export const POPULAR_SEARCHES = [
   { label: "Plumbers", query: "plumber" },

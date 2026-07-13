@@ -4,8 +4,8 @@ import { SectionShell } from "@/components/home/section-shell";
 
 function HeroFallback() {
   return (
-    <section className="border-b border-slate-200 bg-slate-50">
-      <SectionShell className="py-6 sm:py-8 lg:py-12">
+    <section className="min-h-[480px] border-b border-slate-200 bg-slate-100 lg:min-h-[560px]">
+      <SectionShell className="flex min-h-[480px] flex-col justify-start py-6 sm:py-8 lg:min-h-[560px] lg:justify-center lg:py-10">
         <div className="grid gap-5 lg:grid-cols-2 lg:gap-8">
           <div className="order-2 space-y-4 text-center lg:order-1 lg:text-left">
             <div className="mx-auto h-10 w-3/4 animate-pulse rounded-lg bg-slate-200 lg:mx-0" />
