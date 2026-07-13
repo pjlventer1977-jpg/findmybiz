@@ -10,6 +10,7 @@ import { SignOutButton } from "@/components/layout/sign-out-button";
 const NAV_LINKS = [
   { href: "/search", label: "Find Businesses" },
   { href: "/get-quotes", label: "Get 5 Quotes" },
+  { href: "/#for-business", label: "For Business" },
   { href: "/events", label: "Events" },
   { href: "/specials", label: "Specials" },
   { href: "/pricing", label: "Pricing" },
@@ -80,7 +81,7 @@ export function MobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
               </Button>
               <Button className="w-full bg-sa-blue hover:bg-sa-blue/90" asChild>
                 <Link href="/register" onClick={() => setOpen(false)}>
-                  List Your Business
+                  Get Leads
                 </Link>
               </Button>
               <div className="w-full [&_button]:w-full">
@@ -96,7 +97,7 @@ export function MobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
               </Button>
               <Button className="w-full bg-sa-blue hover:bg-sa-blue/90" asChild>
                 <Link href="/register" onClick={() => setOpen(false)}>
-                  Register
+                  Get Leads
                 </Link>
               </Button>
             </>

@@ -8,6 +8,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 const NAV_LINKS = [
   { href: "/search", label: "Find Businesses" },
   { href: "/get-quotes", label: "Get 5 Quotes" },
+  { href: "/#for-business", label: "For Business" },
   { href: "/events", label: "Events" },
   { href: "/specials", label: "Specials" },
   { href: "/pricing", label: "Pricing" },
@@ -70,7 +71,7 @@ export async function Header() {
                 asChild
                 className="hidden rounded-md bg-sa-blue px-3 text-sm font-semibold text-white hover:bg-sa-blue/90 sm:inline-flex sm:px-4"
               >
-                <Link href="/register">List Your Business</Link>
+                <Link href="/register">Get Leads</Link>
               </Button>
               <div className="hidden sm:block">
                 <SignOutButton />
@@ -91,7 +92,7 @@ export async function Header() {
                 asChild
                 className="hidden rounded-md bg-sa-blue px-4 text-sm font-semibold text-white hover:bg-sa-blue/90 sm:inline-flex"
               >
-                <Link href="/register">Register</Link>
+                <Link href="/register">Get Leads</Link>
               </Button>
             </>
           )}

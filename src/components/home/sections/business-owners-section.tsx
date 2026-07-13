@@ -62,7 +62,10 @@ function LeadInboxMockup() {
 
 export function BusinessOwnersSection() {
   return (
-    <section className="relative overflow-hidden border-y border-slate-200 bg-gradient-to-br from-slate-50 via-white to-sa-green/5 py-12 sm:py-16">
+    <section
+      id="for-business"
+      className="relative overflow-hidden border-y border-slate-200 bg-gradient-to-br from-slate-50 via-white to-sa-green/5 py-12 sm:py-16"
+    >
       <div
         className="pointer-events-none absolute -right-24 top-0 h-64 w-64 rounded-full bg-sa-gold/10 blur-3xl"
         aria-hidden
