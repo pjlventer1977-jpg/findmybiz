@@ -10,11 +10,11 @@ export function RegisterCtaSection() {
         <div className="grid items-center gap-5 rounded-2xl border border-white/15 bg-white/10 p-6 sm:p-8 md:grid-cols-[1fr_auto]">
           <div>
             <h2 className="text-2xl font-bold sm:text-3xl">
-              Ready to grow your business?
+              Ready to receive leads in your inbox?
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-white/90 sm:text-base">
               Register your business on FindMyBiz, get verified, and start receiving
-              enquiries from customers across South Africa.
+              qualified enquiries by email and in your dashboard.
             </p>
           </div>
           <Button

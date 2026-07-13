@@ -16,6 +16,10 @@ import {
   Star,
   Truck,
   Calendar,
+  Inbox,
+  LayoutDashboard,
+  Mail,
+  TrendingUp,
 } from "lucide-react";
 
 export const HERO_BACKGROUND_IMAGE = "/hero-johannesburg-skyline.png";
@@ -107,6 +111,51 @@ export const TESTIMONIALS = [
     name: "Themba K.",
     location: "Durban",
     quote: "The Get 5 Quotes feature is a game changer.",
+  },
+] as const;
+
+export const BUSINESS_OWNER_BENEFITS = [
+  {
+    icon: Inbox,
+    title: "Leads to Your Inbox",
+    description:
+      "Receive customer enquiries by email when QuoteMatch routes a lead to you — name, phone, service, and location.",
+    featured: true,
+  },
+  {
+    icon: TrendingUp,
+    title: "Get 5 Quotes Engine",
+    description:
+      "One customer request matched to up to 5 verified local businesses — putting you in front of ready-to-buy customers.",
+    featured: false,
+  },
+  {
+    icon: LayoutDashboard,
+    title: "Lead Dashboard",
+    description:
+      "Manage all enquiries from Dashboard → Leads. Mark leads as read and track your full lead history.",
+    featured: false,
+  },
+  {
+    icon: MessageCircle,
+    title: "WhatsApp Follow-Up",
+    description:
+      "Lead details are ready for quick WhatsApp contact so you can respond fast and win the job.",
+    featured: false,
+  },
+  {
+    icon: ShieldCheck,
+    title: "Verified Listing",
+    description:
+      "Build trust with customers. Verified businesses stand out in search and lead routing.",
+    featured: false,
+  },
+  {
+    icon: Mail,
+    title: "Start Free",
+    description:
+      "List your business for free. Upgrade for more lead credits and priority routing — see plans on Pricing.",
+    featured: false,
   },
 ] as const;
 

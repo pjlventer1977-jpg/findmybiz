@@ -6,6 +6,7 @@ import { SpecialsEventsSectionAsync } from "@/components/home/sections/specials-
 import { StatsBarSectionAsync } from "@/components/home/sections/stats-bar-section-async";
 import { ProvincesSection } from "@/components/home/sections/provinces-section";
 import { TestimonialsSection } from "@/components/home/sections/testimonials-section";
+import { BusinessOwnersSection } from "@/components/home/sections/business-owners-section";
 import { RegisterCtaSection } from "@/components/home/sections/register-cta-section";
 import { NewsletterBar } from "@/components/home/sections/newsletter-bar";
 
@@ -20,6 +21,7 @@ export default function HomePage() {
       <StatsBarSectionAsync />
       <ProvincesSection />
       <TestimonialsSection />
+      <BusinessOwnersSection />
       <RegisterCtaSection />
       <NewsletterBar />
     </>
