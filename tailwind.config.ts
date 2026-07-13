@@ -45,6 +45,8 @@ const config: Config = {
           blue: "#002395",
           red: "#DE3831",
         },
+        "sa-blue": "hsl(var(--sa-blue))",
+        "sa-red": "hsl(var(--sa-red))",
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -8,14 +8,20 @@
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+    /* sa-green #007A4D */
     --primary: 152 100% 24%;
-    --primary-foreground: 210 40% 98%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
+    /* sa-gold #FFB612 */
     --accent: 43 100% 54%;
     --accent-foreground: 222.2 47.4% 11.2%;
+    /* sa-blue #002395 */
+    --sa-blue: 229 100% 29%;
+    /* sa-red #DE3831 */
+    --sa-red: 3 74% 53%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
@@ -31,5 +37,23 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .sa-flag-bar {
+    background: linear-gradient(
+      90deg,
+      #002395 0%,
+      #002395 18%,
+      #ffb612 18%,
+      #ffb612 36%,
+      #007a4d 36%,
+      #007a4d 54%,
+      #ffffff 54%,
+      #ffffff 72%,
+      #de3831 72%,
+      #de3831 100%
+    );
   }
 }
