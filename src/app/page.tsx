@@ -5,10 +5,8 @@ import { FeaturedQuotesSectionAsync } from "@/components/home/sections/featured-
 import { SpecialsEventsSectionAsync } from "@/components/home/sections/specials-events-section-async";
 import { StatsBarSectionAsync } from "@/components/home/sections/stats-bar-section-async";
 import { ProvincesSection } from "@/components/home/sections/provinces-section";
-import { TestimonialsSection } from "@/components/home/sections/testimonials-section";
 import { BusinessOwnersSection } from "@/components/home/sections/business-owners-section";
-import { RegisterCtaSection } from "@/components/home/sections/register-cta-section";
-import { NewsletterBar } from "@/components/home/sections/newsletter-bar";
+import { TestimonialsSection } from "@/components/home/sections/testimonials-section";
 
 export default function HomePage() {
   return (
@@ -20,10 +18,8 @@ export default function HomePage() {
       <SpecialsEventsSectionAsync />
       <StatsBarSectionAsync />
       <ProvincesSection />
-      <TestimonialsSection />
       <BusinessOwnersSection />
-      <RegisterCtaSection />
-      <NewsletterBar />
+      <TestimonialsSection />
     </>
   );
 }
