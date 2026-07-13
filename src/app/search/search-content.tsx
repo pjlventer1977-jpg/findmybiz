@@ -1,5 +1,6 @@
 import { searchBusinesses, getProvinces, getCategories } from "@/lib/queries/public";
 import { BusinessCard } from "@/components/business/business-card";
+import { SearchAppearanceTracker } from "@/components/analytics/search-appearance-tracker";
 import { SearchFilters } from "./search-filters";
 
 interface SearchPageContentProps {
@@ -25,6 +26,10 @@ export async function SearchPageContent({ params }: SearchPageContentProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <SearchAppearanceTracker
+        businessIds={businesses.map((business) => business.id)}
+        searchTerm={params.q}
+      />
       <h1 className="mb-2 text-3xl font-bold text-sa-blue">Find Businesses</h1>
       <p className="mb-6 text-muted-foreground">
         {businesses.length} verified businesses found

@@ -7,6 +7,7 @@ import { TrustBadge } from "@/components/business/business-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildWhatsAppLink } from "@/lib/utils";
+import { ProfileViewTracker } from "@/components/analytics/profile-view-tracker";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -60,6 +61,7 @@ export default async function BusinessProfilePage({ params }: PageProps) {
 
   return (
     <>
+      <ProfileViewTracker businessId={business.id} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
