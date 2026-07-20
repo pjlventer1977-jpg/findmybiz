@@ -21,7 +21,7 @@ function getAppUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? "https://www.findmybiz.co.za";
 }
 
-function getAdminEmail(): string {
+export function getAdminEmail(): string {
   return process.env.ADMIN_APPROVAL_EMAIL ?? DEFAULT_ADMIN_EMAIL;
 }
 
@@ -37,7 +37,7 @@ async function sendBusinessEmail({
   html: string;
 }): Promise<{ success: boolean; error?: string }> {
   if (!isSmtpConfigured()) {
-    console.warn("SMTP not configured — skipping business notification email");
+    console.warn("SMTP not configured — skipping business notification email", { to, subject });
     return { success: false, error: "SMTP not configured" };
   }
 
@@ -55,6 +55,7 @@ async function sendBusinessEmail({
       html,
     });
 
+    console.info("Business notification email sent:", { to, subject });
     return { success: true };
   } catch (error) {
     resetMailTransporter();

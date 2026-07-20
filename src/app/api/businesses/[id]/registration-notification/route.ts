@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
-import {
-  sendBusinessPendingAdminEmail,
-  sendBusinessPendingOwnerEmail,
-} from "@/lib/email/business-notifications";
+import { createClient } from "@/lib/supabase/server";
+import { notifyPendingBusinessRegistration } from "@/lib/email/registration-notifications";
 
 export async function POST(
   _request: NextRequest,
@@ -19,41 +16,25 @@ export async function POST(
   }
 
   const { id: businessId } = await params;
-  const serviceClient = await createServiceClient();
+  const result = await notifyPendingBusinessRegistration(businessId, user.id);
 
-  const { data: business, error } = await serviceClient
-    .from("businesses")
-    .select("id, owner_id, name, email, contact_person, status")
-    .eq("id", businessId)
-    .single();
+  if ("error" in result && !result.ok) {
+    const status =
+      result.error === "Business not found"
+        ? 404
+        : result.error === "Forbidden"
+          ? 403
+          : result.error === "Business is not pending approval"
+            ? 409
+            : 500;
 
-  if (error || !business) {
-    return NextResponse.json({ error: "Business not found" }, { status: 404 });
+    return NextResponse.json({ error: result.error }, { status });
   }
-
-  if (business.owner_id !== user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  if (business.status !== "pending") {
-    return NextResponse.json({ error: "Business is not pending approval" }, { status: 409 });
-  }
-
-  const payload = {
-    businessId: business.id,
-    businessName: business.name,
-    businessEmail: business.email,
-    contactPerson: business.contact_person,
-  };
-
-  const [adminEmail, ownerEmail] = await Promise.all([
-    sendBusinessPendingAdminEmail(payload),
-    sendBusinessPendingOwnerEmail(payload),
-  ]);
 
   return NextResponse.json({
-    success: adminEmail.success || ownerEmail.success,
-    admin_email: adminEmail,
-    owner_email: ownerEmail,
+    success: result.ok,
+    admin_recipient: result.admin_recipient,
+    admin_email: result.admin_email,
+    owner_email: result.owner_email,
   });
 }

@@ -24,6 +24,7 @@ import {
   uploadBusinessDocument,
   validateDocumentFile,
 } from "@/lib/storage/business-documents";
+import { sendRegistrationNotifications } from "@/app/register/actions";
 import type { Province, Category, City, BusinessDocumentType } from "@/types";
 
 interface RegisterPageProps {
@@ -248,16 +249,9 @@ export function BusinessRegistrationForm({
       .eq("id", user.id)
       .neq("role", "admin");
 
-    try {
-      const notification = await fetch(
-        `/api/businesses/${business.id}/registration-notification`,
-        { method: "POST" }
-      );
-      if (!notification.ok) {
-        console.warn("Business registration notification failed");
-      }
-    } catch (notificationError) {
-      console.warn("Business registration notification failed:", notificationError);
+    const notification = await sendRegistrationNotifications(business.id);
+    if (!notification.ok) {
+      console.warn("Business registration notification failed:", notification);
     }
 
     router.push("/dashboard?registered=true");

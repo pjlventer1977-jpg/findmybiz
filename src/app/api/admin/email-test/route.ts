@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin/auth";
 import { verifySmtpConnection, isSmtpConfigured } from "@/lib/email/smtp";
+import { getAdminEmail, sendBusinessPendingAdminEmail } from "@/lib/email/business-notifications";
 import { sendLeadNotificationEmail } from "@/lib/email/lead-notification";
 
 export async function GET() {
@@ -13,6 +14,7 @@ export async function GET() {
     return NextResponse.json(
       {
         configured: false,
+        admin_approval_email: getAdminEmail(),
         error: "SMTP_PASSWORD not set. Restart dev server after updating .env.local",
       },
       { status: 503 }
@@ -26,13 +28,14 @@ export async function GET() {
     connected: result.ok,
     host: result.host,
     port: result.port,
+    admin_approval_email: getAdminEmail(),
     error: result.error,
     dns_note:
-      "mail.findmybiz.co.za must resolve to your cPanel mail server IP, not your Vercel website IP (75.2.60.5).",
+      "mail.findmybiz.co.za must resolve to your cPanel mail server IP, not your Vercel website IP (75.2.60.5). Use SMTP_HOST=102.208.231.6 and SMTP_TLS_SERVERNAME=mail.findmybiz.co.za on Vercel until DNS is fixed.",
   });
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   const auth = await requireAdmin();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -44,6 +47,28 @@ export async function POST() {
       { error: verify.error, host: verify.host, port: verify.port },
       { status: 503 }
     );
+  }
+
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get("type");
+
+  if (type === "business_registration") {
+    const result = await sendBusinessPendingAdminEmail({
+      businessId: "test-business-id",
+      businessName: "Test Business Registration",
+      businessEmail: auth.user.email!,
+      contactPerson: "Test Contact",
+    });
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      type: "business_registration",
+      sent_to: getAdminEmail(),
+    });
   }
 
   const result = await sendLeadNotificationEmail({
