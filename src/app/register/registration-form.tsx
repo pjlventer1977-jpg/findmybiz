@@ -19,7 +19,12 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { slugify } from "@/lib/utils";
 import { uploadBusinessLogo, validateLogoFile } from "@/lib/storage/business-logo";
-import type { Province, Category, City } from "@/types";
+import {
+  DOCUMENT_TYPE_LABELS,
+  uploadBusinessDocument,
+  validateDocumentFile,
+} from "@/lib/storage/business-documents";
+import type { Province, Category, City, BusinessDocumentType } from "@/types";
 
 interface RegisterPageProps {
   provinces: Province[];
@@ -39,8 +44,14 @@ export function BusinessRegistrationForm({
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [documentFiles, setDocumentFiles] = useState<
+    Partial<Record<BusinessDocumentType, File>>
+  >({});
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const documentInputRefs = useRef<
+    Partial<Record<BusinessDocumentType, HTMLInputElement | null>>
+  >({});
 
   useEffect(() => {
     const supabase = createClient();
@@ -87,6 +98,31 @@ export function BusinessRegistrationForm({
     setLogoPreview(URL.createObjectURL(file));
   }
 
+  function handleDocumentChange(
+    documentType: BusinessDocumentType,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setDocumentFiles((prev) => {
+        const next = { ...prev };
+        delete next[documentType];
+        return next;
+      });
+      return;
+    }
+
+    const validationError = validateDocumentFile(file);
+    if (validationError) {
+      setError(validationError);
+      e.target.value = "";
+      return;
+    }
+
+    setError(null);
+    setDocumentFiles((prev) => ({ ...prev, [documentType]: file }));
+  }
+
   async function handleSubmit() {
     setLoading(true);
     setError(null);
@@ -109,6 +145,18 @@ export function BusinessRegistrationForm({
 
     if (!logoFile) {
       setError("Please upload your company logo.");
+      setLoading(false);
+      return;
+    }
+
+    if (!documentFiles.proof_of_address) {
+      setError("Please upload proof of address.");
+      setLoading(false);
+      return;
+    }
+
+    if (!documentFiles.id_document) {
+      setError("Please upload your ID or passport.");
       setLoading(false);
       return;
     }
@@ -159,11 +207,58 @@ export function BusinessRegistrationForm({
       return;
     }
 
+    try {
+      await uploadBusinessDocument(
+        supabase,
+        user.id,
+        business.id,
+        documentFiles.proof_of_address,
+        "proof_of_address"
+      );
+      await uploadBusinessDocument(
+        supabase,
+        user.id,
+        business.id,
+        documentFiles.id_document,
+        "id_document"
+      );
+
+      if (documentFiles.cipc) {
+        await uploadBusinessDocument(
+          supabase,
+          user.id,
+          business.id,
+          documentFiles.cipc,
+          "cipc"
+        );
+      }
+    } catch (uploadError) {
+      setError(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "Business created but document upload failed. Upload documents from your dashboard."
+      );
+      setLoading(false);
+      return;
+    }
+
     await supabase
       .from("profiles")
       .update({ role: "business_owner" })
       .eq("id", user.id)
       .neq("role", "admin");
+
+    try {
+      const notification = await fetch(
+        `/api/businesses/${business.id}/registration-notification`,
+        { method: "POST" }
+      );
+      if (!notification.ok) {
+        console.warn("Business registration notification failed");
+      }
+    } catch (notificationError) {
+      console.warn("Business registration notification failed:", notificationError);
+    }
 
     router.push("/dashboard?registered=true");
   }
@@ -383,15 +478,33 @@ export function BusinessRegistrationForm({
               </div>
 
               {[
-                { type: "proof_of_address", label: "Proof of Address", required: true },
-                { type: "id_document", label: "ID / Passport", required: true },
-                { type: "cipc", label: "CIPC Registration (optional)", required: false },
+                { type: "proof_of_address" as const, label: "Proof of Address", required: true },
+                { type: "id_document" as const, label: "ID / Passport", required: true },
+                { type: "cipc" as const, label: "CIPC Registration (optional)", required: false },
               ].map((doc) => (
                 <div key={doc.type}>
                   <Label>
                     {doc.label} {doc.required && "*"}
                   </Label>
-                  <Input type="file" accept=".pdf,.jpg,.jpeg,.png" className="mt-1" />
+                  <input
+                    ref={(el) => {
+                      documentInputRefs.current[doc.type] = el;
+                    }}
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                    className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1 file:text-sm"
+                    onChange={(e) => handleDocumentChange(doc.type, e)}
+                  />
+                  {documentFiles[doc.type] && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Selected: {documentFiles[doc.type]?.name}
+                    </p>
+                  )}
+                  {!doc.required && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {DOCUMENT_TYPE_LABELS[doc.type]}
+                    </p>
+                  )}
                 </div>
               ))}
               <p className="text-xs text-muted-foreground">

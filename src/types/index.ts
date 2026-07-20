@@ -85,6 +85,18 @@ export interface Business {
   categories?: Category[];
 }
 
+export type BusinessDocumentType = "proof_of_address" | "id_document" | "cipc";
+
+export interface BusinessDocument {
+  id: string;
+  business_id: string;
+  document_type: BusinessDocumentType;
+  file_url: string;
+  file_name?: string;
+  verified: boolean;
+  uploaded_at: string;
+}
+
 export interface Lead {
   id: string;
   quote_request_id: string;
