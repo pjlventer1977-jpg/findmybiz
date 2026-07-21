@@ -35,10 +35,10 @@ export async function notifyPendingBusinessRegistration(
     contactPerson: business.contact_person,
   };
 
-  const [adminEmail, ownerEmail] = await Promise.all([
-    sendBusinessPendingAdminEmail(payload),
-    sendBusinessPendingOwnerEmail(payload),
-  ]);
+  // Send sequentially: the cPanel SMTP account is used by both messages and
+  // can reject concurrent authenticated connections from a serverless function.
+  const adminEmail = await sendBusinessPendingAdminEmail(payload);
+  const ownerEmail = await sendBusinessPendingOwnerEmail(payload);
 
   const adminRecipient = getAdminEmail();
 
@@ -59,7 +59,7 @@ export async function notifyPendingBusinessRegistration(
   }
 
   return {
-    ok: adminEmail.success || ownerEmail.success,
+    ok: adminEmail.success && ownerEmail.success,
     admin_recipient: adminRecipient,
     admin_email: adminEmail,
     owner_email: ownerEmail,
