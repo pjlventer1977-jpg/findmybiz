@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Inbox, Mail, TrendingUp } from "lucide-react";
+import { SectionShell } from "@/components/home/section-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -44,22 +45,39 @@ function leadsLabel(count: number): string {
 
 export default function PricingPage() {
   return (
-    <div className="container mx-auto px-4 py-10 sm:py-12">
-      <div className="mx-auto mb-10 max-w-3xl text-center">
-        <h1 className="text-3xl font-bold text-sa-blue sm:text-4xl">
-          Simple, Transparent Pricing
-        </h1>
-        <p className="mt-3 text-base font-medium text-sa-green sm:text-lg">
-          Each lead is a customer enquiry from Get 5 Quotes — delivered to your
-          email and dashboard.
-        </p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Choose the plan that fits your business. Scale up as your lead volume
-          grows.
-        </p>
-      </div>
+    <main className="min-h-screen bg-slate-50 py-8 sm:py-10">
+      <SectionShell>
+        <section className="mx-auto mb-10 max-w-6xl overflow-hidden rounded-3xl border border-sa-blue/10 bg-gradient-to-br from-sa-blue/10 via-white to-sa-gold/10 px-6 py-8 text-center shadow-sm sm:px-8 sm:py-10">
+          <h1 className="text-3xl font-bold tracking-tight text-sa-blue sm:text-4xl">
+            Simple, Transparent Pricing
+          </h1>
+          <p className="mx-auto mt-3 max-w-2xl text-base font-medium leading-relaxed text-sa-green sm:text-lg">
+            Each lead is a customer enquiry from Get 5 Quotes — delivered to your email and dashboard.
+          </p>
+          <p className="mt-2 text-sm text-slate-600">
+            Choose the plan that fits your business. Scale up as your lead volume grows.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
+            {[
+              { label: "Leads to your inbox", icon: Mail },
+              { label: "Manage in your dashboard", icon: Inbox },
+              { label: "Grow at your pace", icon: TrendingUp },
+            ].map(({ label, icon: Icon }) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-sa-green/20 bg-white/80 px-3 py-1.5 text-xs font-semibold text-sa-blue shadow-sm"
+              >
+                <Icon className="h-3.5 w-3.5 text-sa-green" aria-hidden />
+                {label}
+              </span>
+            ))}
+          </div>
+          <p className="mt-5 text-sm font-semibold text-sa-gold">
+            Start free · Upgrade when you&apos;re ready
+          </p>
+        </section>
 
-      <div className="mx-auto mb-10 max-w-5xl rounded-2xl border border-sa-green/20 bg-gradient-to-r from-sa-green/5 via-white to-sa-gold/5 px-4 py-4 sm:px-6">
+        <div className="mx-auto mb-10 max-w-5xl rounded-2xl border border-sa-green/20 bg-gradient-to-r from-sa-green/5 via-white to-sa-gold/5 px-4 py-4 shadow-sm sm:px-6">
         <p className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-sa-blue">
           All plans include
         </p>
@@ -74,9 +92,9 @@ export default function PricingPage() {
             </li>
           ))}
         </ul>
-      </div>
+        </div>
 
-      <div className="mx-auto mb-16 grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto mb-16 grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {MEMBERSHIP_PLANS.map((plan) => {
           const isPopular = plan.tier === "professional";
 
@@ -84,7 +102,7 @@ export default function PricingPage() {
             <Card
               key={plan.tier}
               className={cn(
-                "flex flex-col",
+                "flex flex-col rounded-2xl border-slate-200 shadow-sm transition-shadow hover:shadow-md",
                 isPopular && "border-sa-gold shadow-lg ring-1 ring-sa-gold/30 lg:scale-[1.02]"
               )}
             >
@@ -140,16 +158,16 @@ export default function PricingPage() {
             </Card>
           );
         })}
-      </div>
+        </div>
 
-      <div className="mx-auto mb-16 max-w-5xl">
+        <section className="mx-auto mb-16 max-w-5xl">
         <h2 className="mb-2 text-center text-2xl font-bold text-sa-blue">
           Compare plans
         </h2>
         <p className="mb-6 text-center text-sm text-muted-foreground">
           See how lead volume and visibility grow across tiers.
         </p>
-        <div className="overflow-x-auto rounded-xl border border-slate-200">
+        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead>
               <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
@@ -189,9 +207,9 @@ export default function PricingPage() {
             </tbody>
           </table>
         </div>
-      </div>
+        </section>
 
-      <div className="mx-auto max-w-3xl text-center">
+        <section className="mx-auto max-w-3xl border-t border-slate-200 pt-12 text-center">
         <h2 className="mb-3 text-2xl font-bold text-sa-blue">Lead Credit Top-Ups</h2>
         <p className="mx-auto mb-2 max-w-2xl text-sm leading-relaxed text-slate-600">
           Need more enquiries after your monthly allowance? Buy lead credits anytime.
@@ -207,7 +225,7 @@ export default function PricingPage() {
           {LEAD_CREDIT_PACKS.map((pack) => (
             <div
               key={pack.credits}
-              className="rounded-xl border border-sa-gold/30 bg-gradient-to-b from-sa-gold/10 to-white p-4"
+              className="rounded-2xl border border-sa-gold/30 bg-gradient-to-b from-sa-gold/10 to-white p-4 shadow-sm"
             >
               <p className="text-2xl font-bold text-sa-blue">{pack.credits}</p>
               <p className="text-sm text-muted-foreground">lead credits</p>
@@ -217,7 +235,30 @@ export default function PricingPage() {
             </div>
           ))}
         </div>
-      </div>
-    </div>
+        </section>
+
+        <section className="mx-auto mt-12 max-w-5xl rounded-2xl bg-gradient-to-r from-sa-green to-sa-blue px-6 py-8 text-center text-white shadow-lg sm:px-8">
+          <h2 className="text-2xl font-bold">Ready to receive leads in your inbox?</h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-white/85">
+            List your business for free and be ready when customers request quotes.
+          </p>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button
+              className="h-11 rounded-lg bg-sa-gold px-5 text-sm font-semibold text-slate-900 hover:bg-sa-gold/90"
+              asChild
+            >
+              <Link href="/register">Register Your Business Free</Link>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-11 rounded-lg border-white/50 bg-transparent text-sm font-semibold text-white hover:bg-white/10 hover:text-white"
+              asChild
+            >
+              <Link href="/get-quotes">See how Get 5 Quotes works</Link>
+            </Button>
+          </div>
+        </section>
+      </SectionShell>
+    </main>
   );
 }

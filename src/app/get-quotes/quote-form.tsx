@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -102,34 +102,47 @@ export function QuoteRequestForm({ provinces, categories }: QuoteRequestFormProp
   }
 
   return (
-    <Card>
-      <CardContent className="pt-6">
+    <Card className="rounded-2xl border-slate-200 bg-white shadow-lg">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-2xl text-sa-blue">Request a Quote</CardTitle>
+        <p className="text-sm text-slate-600">
+          Share a few details and we&apos;ll match you with local businesses.
+        </p>
+      </CardHeader>
+      <CardContent className="pt-4 sm:pb-8">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="name">Full Name *</Label>
-              <Input id="name" name="name" required />
+              <Input id="name" name="name" required className="h-11 rounded-lg" />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="phone">Mobile Number *</Label>
-              <Input id="phone" name="phone" type="tel" required placeholder="082 123 4567" />
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                required
+                placeholder="082 123 4567"
+                className="h-11 rounded-lg"
+              />
             </div>
           </div>
 
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="email">Email Address *</Label>
-            <Input id="email" name="email" type="email" required />
+            <Input id="email" name="email" type="email" required className="h-11 rounded-lg" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-1.5">
               <Label>Province *</Label>
               <Select
                 name="province"
                 required
                 onValueChange={setSelectedProvince}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-11 rounded-lg">
                   <SelectValue placeholder="Select province" />
                 </SelectTrigger>
                 <SelectContent>
@@ -141,10 +154,10 @@ export function QuoteRequestForm({ provinces, categories }: QuoteRequestFormProp
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>City / Town *</Label>
               <Select name="city" required disabled={!selectedProvince}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 rounded-lg">
                   <SelectValue placeholder="Select city" />
                 </SelectTrigger>
                 <SelectContent>
@@ -158,10 +171,10 @@ export function QuoteRequestForm({ provinces, categories }: QuoteRequestFormProp
             </div>
           </div>
 
-          <div>
+          <div className="space-y-1.5">
             <Label>Service Category *</Label>
             <Select name="category" required>
-              <SelectTrigger>
+              <SelectTrigger className="h-11 rounded-lg">
                 <SelectValue placeholder="What service do you need?" />
               </SelectTrigger>
               <SelectContent>
@@ -174,7 +187,7 @@ export function QuoteRequestForm({ provinces, categories }: QuoteRequestFormProp
             </Select>
           </div>
 
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="description">Describe what you need *</Label>
             <Textarea
               id="description"
@@ -182,12 +195,18 @@ export function QuoteRequestForm({ provinces, categories }: QuoteRequestFormProp
               required
               rows={4}
               placeholder="Please describe the service you need in detail..."
+              className="rounded-lg"
             />
           </div>
 
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="budget">Budget (optional)</Label>
-            <Input id="budget" name="budget" placeholder="e.g. R5,000 - R10,000" />
+            <Input
+              id="budget"
+              name="budget"
+              placeholder="e.g. R5,000 - R10,000"
+              className="h-11 rounded-lg"
+            />
           </div>
 
           <div className="flex items-start gap-2">
@@ -207,7 +226,12 @@ export function QuoteRequestForm({ provinces, categories }: QuoteRequestFormProp
             <p className="text-sm text-destructive">{error}</p>
           )}
 
-          <Button type="submit" className="w-full" size="lg" disabled={loading}>
+          <Button
+            type="submit"
+            className="h-11 w-full rounded-lg bg-sa-gold text-sm font-semibold text-slate-900 hover:bg-sa-gold/90"
+            size="lg"
+            disabled={loading}
+          >
             {loading ? "Submitting..." : "Request 5 Quotes"}
           </Button>
         </form>
