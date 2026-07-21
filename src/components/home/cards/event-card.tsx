@@ -39,7 +39,7 @@ export function EventCard({ event, className }: EventCardProps) {
       </div>
       <div className="p-4">
         <h3 className="line-clamp-2 text-sm font-semibold text-sa-blue group-hover:text-sa-green">
-          <Link href="/events">{event.name}</Link>
+          <Link href={`/events/${event.slug}`}>{event.name}</Link>
         </h3>
         {(location || event.venue) && (
           <p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
