@@ -40,7 +40,7 @@ export function SpecialCard({ special }: SpecialCardProps) {
         <h2 className="line-clamp-2 text-base font-bold text-sa-blue">{special.title}</h2>
         {special.business && (
           <Link
-            href={`/business/${special.business.slug}`}
+            href={`/business/${special.business.slug}#specials`}
             className="mt-2 inline-block text-sm font-semibold text-sa-green transition-colors hover:text-sa-blue"
           >
             {special.business.name}
@@ -50,7 +50,7 @@ export function SpecialCard({ special }: SpecialCardProps) {
           <p className="text-xs text-slate-500">Valid until {expiryDate}</p>
           {special.business && (
             <Link
-              href={`/business/${special.business.slug}`}
+              href={`/business/${special.business.slug}#specials`}
               className="shrink-0 text-sm font-semibold text-sa-green transition-colors hover:text-sa-blue"
             >
               View deal

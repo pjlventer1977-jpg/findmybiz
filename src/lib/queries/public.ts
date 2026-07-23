@@ -194,6 +194,21 @@ export async function getLatestSpecials(limit = 6): Promise<Special[]> {
   return data ?? [];
 }
 
+export async function getActiveSpecialsByBusinessId(
+  businessId: string
+): Promise<Special[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("specials")
+    .select("id, title, description, image_url, start_date, expiry_date, business_id, status, created_at")
+    .eq("business_id", businessId)
+    .eq("status", "approved")
+    .gte("expiry_date", new Date().toISOString().split("T")[0])
+    .order("created_at", { ascending: false });
+
+  return data ?? [];
+}
+
 export async function getUpcomingEvents(limit = 6): Promise<Event[]> {
   const supabase = await createClient();
   const { data } = await supabase

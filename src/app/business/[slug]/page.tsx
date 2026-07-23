@@ -2,8 +2,9 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Phone, Mail, Globe, MapPin, MessageCircle, FileText } from "lucide-react";
-import { getBusinessBySlug } from "@/lib/queries/public";
+import { getActiveSpecialsByBusinessId, getBusinessBySlug } from "@/lib/queries/public";
 import { TrustBadge } from "@/components/business/business-card";
+import { BusinessSpecialsList } from "@/components/business/business-specials-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildWhatsAppLink } from "@/lib/utils";
@@ -33,6 +34,7 @@ export default async function BusinessProfilePage({ params }: PageProps) {
   const { slug } = await params;
   const business = await getBusinessBySlug(slug);
   if (!business) notFound();
+  const specials = await getActiveSpecialsByBusinessId(business.id);
 
   const whatsappLink = business.whatsapp
     ? buildWhatsAppLink(
@@ -130,6 +132,20 @@ export default async function BusinessProfilePage({ params }: PageProps) {
                       </Link>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {specials.length > 0 && (
+              <Card id="specials" className="scroll-mt-24 overflow-hidden border-slate-200 shadow-sm">
+                <CardHeader className="border-b border-slate-100">
+                  <CardTitle className="text-sa-blue">Current Specials</CardTitle>
+                  <p className="text-sm text-slate-600">
+                    Limited-time offers from {business.name}.
+                  </p>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <BusinessSpecialsList specials={specials} />
                 </CardContent>
               </Card>
             )}
