@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { recalculateBizTrustScore } from "@/lib/admin/biz-trust";
 import { createServiceClient } from "@/lib/supabase/server";
+import { sendBusinessApprovedEmail } from "@/lib/email/business-notifications";
 
 const actionSchema = z.object({
   action: z.enum(["approved", "rejected", "suspended"]),
@@ -33,7 +34,7 @@ export async function PATCH(
 
   const { data: business, error: fetchError } = await supabase
     .from("businesses")
-    .select("id, status")
+    .select("id, status, name, email, contact_person")
     .eq("id", businessId)
     .single();
 
@@ -61,6 +62,25 @@ export async function PATCH(
   let bizTrustScore: number | undefined;
   if (action === "approved") {
     bizTrustScore = await recalculateBizTrustScore(supabase, businessId);
+
+    await supabase
+      .from("business_documents")
+      .update({ verified: true })
+      .eq("business_id", businessId);
+
+    const emailResult = await sendBusinessApprovedEmail({
+      businessId: business.id,
+      businessName: business.name,
+      businessEmail: business.email,
+      contactPerson: business.contact_person,
+    });
+
+    if (!emailResult.success) {
+      console.warn("Business approval email failed:", {
+        business_id: businessId,
+        error: emailResult.error,
+      });
+    }
   }
 
   const { error: logError } = await supabase.from("admin_actions").insert({

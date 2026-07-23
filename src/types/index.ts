@@ -59,9 +59,9 @@ export interface Business {
   whatsapp?: string;
   website?: string;
   address?: string;
-  province_id: string;
+  province_id?: string | null;
   district_id?: string;
-  city_id: string;
+  city_id?: string | null;
   suburb_id?: string;
   latitude?: number;
   longitude?: number;

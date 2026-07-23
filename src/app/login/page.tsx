@@ -21,7 +21,6 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isRegister, setIsRegister] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -34,25 +33,7 @@ function LoginForm() {
     const supabase = createClient();
 
     try {
-      if (isRegister) {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: formData.get("name") as string },
-            emailRedirectTo: `${window.location.origin}/dashboard`,
-          },
-        });
-        if (signUpError) {
-          setError(signUpError.message);
-          setLoading(false);
-          return;
-        }
-        window.location.assign("/register?verified=pending");
-        return;
-      }
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -62,11 +43,17 @@ function LoginForm() {
         return;
       }
 
-      const redirect = searchParams.get("redirect") ?? "/dashboard";
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", signInData.user.id)
+        .maybeSingle();
+      const defaultRedirect = profile?.role === "admin" ? "/admin" : "/dashboard/profile";
+      const redirect = searchParams.get("redirect") ?? defaultRedirect;
       const safeRedirect =
         redirect.startsWith("/") && !redirect.startsWith("//")
           ? redirect
-          : "/dashboard";
+          : defaultRedirect;
       // Full navigation ensures auth cookies are sent to middleware/server
       window.location.assign(safeRedirect);
     } catch {
@@ -96,12 +83,10 @@ function LoginForm() {
 
           <div className="mt-5 hidden w-full sm:block lg:mt-8">
             <h1 className="text-3xl font-bold tracking-tight text-sa-blue lg:text-4xl">
-              {isRegister ? "Join Find My Biz" : "Welcome back"}
+              Welcome back
             </h1>
             <p className="mt-3 max-w-md text-base leading-relaxed text-slate-700">
-              {isRegister
-                ? "Create an account to find trusted local businesses and grow your business."
-                : "Sign in to manage your business, track leads, and stay connected with customers."}
+              Sign in to manage your business, track leads, and stay connected with customers.
             </p>
 
             <ul className="mt-6 space-y-3 text-left">
@@ -137,22 +122,14 @@ function LoginForm() {
         <div className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-lg backdrop-blur-sm sm:p-8">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-sa-blue">
-              {isRegister ? "Create Account" : "Sign In"}
+              Sign In
             </h2>
             <p className="mt-1.5 text-sm text-slate-600">
-              {isRegister
-                ? "Set up your account to get started."
-                : "Enter your details to access your dashboard."}
+              Enter your details to access your dashboard.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {isRegister && (
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" name="name" required className="h-11 rounded-lg" />
-              </div>
-            )}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -172,7 +149,7 @@ function LoginForm() {
                 type="password"
                 required
                 minLength={6}
-                autoComplete={isRegister ? "new-password" : "current-password"}
+                autoComplete="current-password"
                 className="h-11 rounded-lg"
               />
             </div>
@@ -182,30 +159,19 @@ function LoginForm() {
               className="h-11 w-full rounded-lg bg-sa-gold text-sm font-semibold text-slate-900 shadow-sm hover:bg-sa-gold/90"
               disabled={loading}
             >
-              {loading ? "Please wait..." : isRegister ? "Sign Up" : "Sign In"}
+              {loading ? "Please wait..." : "Sign In"}
             </Button>
           </form>
 
           <p className="mt-5 text-center text-sm text-slate-600">
-            {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
-            <button
-              type="button"
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/register"
               className="font-semibold text-sa-green transition-colors hover:text-sa-blue"
-              onClick={() => setIsRegister(!isRegister)}
             >
-              {isRegister ? "Sign In" : "Sign Up"}
-            </button>
+              Register your business
+            </Link>
           </p>
-          {!isRegister && (
-            <p className="mt-3 text-center text-sm text-slate-600">
-              <Link
-                href="/register"
-                className="font-semibold text-sa-blue transition-colors hover:text-sa-green"
-              >
-                Register your business
-              </Link>
-            </p>
-          )}
         </div>
       </div>
     </div>

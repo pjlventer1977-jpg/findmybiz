@@ -4,18 +4,29 @@ import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
 
 export default async function DashboardSpecialsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const business = await getOwnerPrimaryBusiness(user!.id);
 
   if (!business) return <p>Register a business first.</p>;
 
   const startOfMonth = new Date(new Date().setDate(1)).toISOString();
-  const { count } = await supabase
-    .from("specials")
-    .select("*", { count: "exact", head: true })
-    .eq("business_id", business.id)
-    .gte("created_at", startOfMonth);
+
+  const [{ count }, { data: specials }] = await Promise.all([
+    supabase
+      .from("specials")
+      .select("*", { count: "exact", head: true })
+      .eq("business_id", business.id)
+      .gte("created_at", startOfMonth),
+    supabase
+      .from("specials")
+      .select("id, image_url, created_at")
+      .eq("business_id", business.id)
+      .gte("created_at", startOfMonth)
+      .order("created_at", { ascending: false }),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -24,6 +35,7 @@ export default async function DashboardSpecialsPage() {
         businessId={business.id}
         tier={business.membership_tier}
         existingCount={count ?? 0}
+        specials={specials ?? []}
       />
     </div>
   );

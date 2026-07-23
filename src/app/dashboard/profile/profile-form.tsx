@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogoUpload } from "@/components/business/logo-upload";
 import { DocumentUpload } from "@/components/business/document-upload";
@@ -8,8 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { BusinessDocument } from "@/types";
+import { createClient } from "@/lib/supabase/client";
+import type { BusinessDocument, Category, City, Province } from "@/types";
 
 interface ProfileFormProps {
   business: {
@@ -19,22 +27,54 @@ interface ProfileFormProps {
     phone: string;
     email: string;
     website?: string | null;
+    address?: string | null;
+    province_id?: string | null;
+    city_id?: string | null;
     status: string;
     slug: string;
     logo_url?: string | null;
   };
   documents: BusinessDocument[];
+  provinces: Province[];
+  categories: Category[];
+  primaryCategoryId: string | null;
 }
 
-export function ProfileForm({ business, documents }: ProfileFormProps) {
+export function ProfileForm({
+  business,
+  documents,
+  provinces,
+  categories,
+  primaryCategoryId,
+}: ProfileFormProps) {
   const router = useRouter();
   const [description, setDescription] = useState(business.description ?? "");
   const [phone, setPhone] = useState(business.phone);
   const [email, setEmail] = useState(business.email);
   const [website, setWebsite] = useState(business.website ?? "");
+  const [address, setAddress] = useState(business.address ?? "");
+  const [provinceId, setProvinceId] = useState(business.province_id ?? "");
+  const [cityId, setCityId] = useState(business.city_id ?? "");
+  const [categoryId, setCategoryId] = useState(primaryCategoryId ?? "");
+  const [cities, setCities] = useState<City[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!provinceId) {
+      setCities([]);
+      return;
+    }
+
+    const supabase = createClient();
+    supabase
+      .from("cities")
+      .select("*")
+      .eq("province_id", provinceId)
+      .order("name")
+      .then(({ data }) => setCities(data ?? []));
+  }, [provinceId]);
 
   const proofOfAddress = documents.find(
     (doc) => doc.document_type === "proof_of_address"
@@ -57,6 +97,10 @@ export function ProfileForm({ business, documents }: ProfileFormProps) {
           phone,
           email,
           website,
+          address,
+          provinceId: provinceId || null,
+          cityId: cityId || null,
+          categoryId: categoryId || null,
         }),
       });
 
@@ -129,7 +173,7 @@ export function ProfileForm({ business, documents }: ProfileFormProps) {
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Update your public business details. Available on all plans.
+            Add the details customers need to find and contact your business.
           </p>
         </CardHeader>
         <CardContent>
@@ -152,7 +196,7 @@ export function ProfileForm({ business, documents }: ProfileFormProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
@@ -173,6 +217,76 @@ export function ProfileForm({ business, documents }: ProfileFormProps) {
                   required
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Physical Address</Label>
+              <Textarea
+                id="address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                rows={3}
+                placeholder="Street address, suburb, and postal code"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Province</Label>
+                <Select
+                  value={provinceId || undefined}
+                  onValueChange={(value) => {
+                    setProvinceId(value);
+                    setCityId("");
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select province" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {provinces.map((province) => (
+                      <SelectItem key={province.id} value={province.id}>
+                        {province.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>City / Town</Label>
+                <Select
+                  value={cityId || undefined}
+                  onValueChange={setCityId}
+                  disabled={!provinceId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select city or town" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cities.map((city) => (
+                      <SelectItem key={city.id} value={city.id}>
+                        {city.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Primary Category</Label>
+              <Select value={categoryId || undefined} onValueChange={setCategoryId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

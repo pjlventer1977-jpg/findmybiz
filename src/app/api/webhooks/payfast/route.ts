@@ -13,6 +13,11 @@ export async function POST(request: NextRequest) {
   });
 
   if (!verifyPayFastITN(postData)) {
+    console.warn("PayFast ITN signature verification failed", {
+      m_payment_id: postData.m_payment_id,
+      payment_status: postData.payment_status,
+      field_order: Object.keys(postData),
+    });
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 

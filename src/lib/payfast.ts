@@ -63,9 +63,22 @@ export interface PayFastPaymentData {
   cycles?: string;
 }
 
-/** PayFast requires RFC 1738-style encoding with + for spaces and uppercase hex (e.g. %3A). */
+/** Match PHP urlencode(trim($val)) — PayFast requires + for spaces and uppercase hex. */
 function encodeValue(value: string): string {
-  return encodeURIComponent(value.trim()).replace(/%20/g, "+");
+  const trimmed = value.trim();
+  let encoded = "";
+
+  for (const char of trimmed) {
+    if (/[a-zA-Z0-9-_.]/.test(char)) {
+      encoded += char;
+    } else if (char === " ") {
+      encoded += "+";
+    } else {
+      encoded += `%${char.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0")}`;
+    }
+  }
+
+  return encoded;
 }
 
 function getPayFastPassphrase(): string | undefined {
@@ -153,13 +166,15 @@ export function verifyPayFastITN(
   const receivedSignature = postData.signature;
   if (!receivedSignature) return false;
 
-  const data = { ...postData };
-  delete data.signature;
+  const fieldOrder = Object.keys(postData);
+  const signatureIndex = fieldOrder.indexOf("signature");
+  const signedFieldOrder =
+    signatureIndex === -1 ? fieldOrder : fieldOrder.slice(0, signatureIndex);
 
   const calculated = generatePayFastSignature(
-    data,
+    postData,
     getPayFastPassphrase(),
-    Object.keys(data)
+    signedFieldOrder
   );
 
   return calculated === receivedSignature;
