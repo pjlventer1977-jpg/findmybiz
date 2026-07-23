@@ -8,7 +8,6 @@ const profileSchema = z.object({
   phone: z.string().min(5).max(30),
   email: z.string().email().max(255),
   website: z.string().max(500).optional().nullable(),
-  address: z.string().max(500).optional().nullable(),
   provinceId: z.string().uuid().optional().nullable(),
   cityId: z.string().uuid().optional().nullable(),
   categoryId: z.string().uuid().optional().nullable(),
@@ -51,7 +50,7 @@ export async function PATCH(
       );
     }
 
-    const { description, phone, email, website, address, provinceId, cityId, categoryId } =
+    const { description, phone, email, website, provinceId, cityId, categoryId } =
       parsed.data;
 
     if (cityId) {
@@ -83,7 +82,6 @@ export async function PATCH(
         phone: phone.trim(),
         email: email.trim().toLowerCase(),
         website: normalizeWebsite(website),
-        address: address?.trim() || null,
         province_id: provinceId ?? null,
         city_id: cityId ?? null,
         updated_at: new Date().toISOString(),

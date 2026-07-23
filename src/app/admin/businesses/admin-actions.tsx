@@ -6,14 +6,22 @@ import { Button } from "@/components/ui/button";
 
 interface AdminBusinessActionsProps {
   businessId: string;
+  canApprove: boolean;
+  canVerifiedApprove: boolean;
 }
 
-export function AdminBusinessActions({ businessId }: AdminBusinessActionsProps) {
+export function AdminBusinessActions({
+  businessId,
+  canApprove,
+  canVerifiedApprove,
+}: AdminBusinessActionsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleAction(action: "approved" | "rejected" | "suspended") {
+  async function handleAction(
+    action: "approved" | "verified_approved" | "rejected" | "suspended"
+  ) {
     setLoading(action);
     setError(null);
 
@@ -27,7 +35,13 @@ export function AdminBusinessActions({ businessId }: AdminBusinessActionsProps) 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error ?? "Action failed");
+        const requirements = [
+          ...(data.missingFields ?? []),
+          ...(data.missingDocuments ?? []),
+        ];
+        throw new Error(
+          [data.error ?? "Action failed", requirements.join(", ")].filter(Boolean).join(": ")
+        );
       }
 
       router.refresh();
@@ -40,13 +54,21 @@ export function AdminBusinessActions({ businessId }: AdminBusinessActionsProps) 
 
   return (
     <div className="flex flex-col items-end gap-2">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
         <Button
           size="sm"
-          disabled={!!loading}
+          disabled={!!loading || !canApprove}
           onClick={() => handleAction("approved")}
         >
           {loading === "approved" ? "Approving..." : "Approve"}
+        </Button>
+        <Button
+          size="sm"
+          className="bg-sa-green text-white hover:bg-sa-green/90"
+          disabled={!!loading || !canVerifiedApprove}
+          onClick={() => handleAction("verified_approved")}
+        >
+          {loading === "verified_approved" ? "Approving..." : "Verified & Approved"}
         </Button>
         <Button
           size="sm"

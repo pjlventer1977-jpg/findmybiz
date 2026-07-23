@@ -4,9 +4,15 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { recalculateBizTrustScore } from "@/lib/admin/biz-trust";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendBusinessApprovedEmail } from "@/lib/email/business-notifications";
+import {
+  canApprove,
+  getMissingVerificationDocuments,
+  getProfileCompleteness,
+  hasVerificationDocuments,
+} from "@/lib/business/profile-readiness";
 
 const actionSchema = z.object({
-  action: z.enum(["approved", "rejected", "suspended"]),
+  action: z.enum(["approved", "verified_approved", "rejected", "suspended"]),
 });
 
 export async function PATCH(
@@ -34,7 +40,9 @@ export async function PATCH(
 
   const { data: business, error: fetchError } = await supabase
     .from("businesses")
-    .select("id, status, name, email, contact_person")
+    .select(
+      "id, status, name, email, contact_person, description, phone, province_id, city_id, logo_url, business_categories(category_id), business_documents(*)"
+    )
     .eq("id", businessId)
     .single();
 
@@ -42,13 +50,42 @@ export async function PATCH(
     return NextResponse.json({ error: "Business not found" }, { status: 404 });
   }
 
+  const primaryCategoryId = business.business_categories[0]?.category_id;
+  const documents = business.business_documents;
+  const isApprovalAction = action === "approved" || action === "verified_approved";
+  const completeness = getProfileCompleteness(
+    business,
+    primaryCategoryId,
+    Boolean(business.logo_url)
+  );
+
+  if (isApprovalAction && !canApprove(business, primaryCategoryId, Boolean(business.logo_url))) {
+    return NextResponse.json(
+      {
+        error: "Listing profile is incomplete.",
+        missingFields: completeness.missingFields,
+      },
+      { status: 400 }
+    );
+  }
+
+  if (action === "verified_approved" && !hasVerificationDocuments(documents)) {
+    return NextResponse.json(
+      {
+        error: "Verification documents are incomplete.",
+        missingDocuments: getMissingVerificationDocuments(documents),
+      },
+      { status: 400 }
+    );
+  }
+
   const { error: updateError } = await supabase
     .from("businesses")
     .update({
-      status: action,
-      is_verified: action === "approved",
-      approved_at: action === "approved" ? new Date().toISOString() : null,
-      approved_by: action === "approved" ? auth.user.id : null,
+      status: isApprovalAction ? "approved" : action,
+      is_verified: action === "verified_approved",
+      approved_at: isApprovalAction ? new Date().toISOString() : null,
+      approved_by: isApprovalAction ? auth.user.id : null,
     })
     .eq("id", businessId);
 
@@ -60,13 +97,16 @@ export async function PATCH(
   }
 
   let bizTrustScore: number | undefined;
-  if (action === "approved") {
-    bizTrustScore = await recalculateBizTrustScore(supabase, businessId);
-
+  if (action === "verified_approved") {
     await supabase
       .from("business_documents")
       .update({ verified: true })
-      .eq("business_id", businessId);
+      .eq("business_id", businessId)
+      .in("document_type", ["proof_of_address", "id_document"]);
+  }
+
+  if (isApprovalAction) {
+    bizTrustScore = await recalculateBizTrustScore(supabase, businessId);
 
     const emailResult = await sendBusinessApprovedEmail({
       businessId: business.id,
@@ -97,7 +137,7 @@ export async function PATCH(
   return NextResponse.json({
     success: true,
     business_id: businessId,
-    status: action,
+    status: isApprovalAction ? "approved" : action,
     biz_trust_score: bizTrustScore,
   });
 }

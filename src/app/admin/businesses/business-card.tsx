@@ -1,53 +1,88 @@
 import Link from "next/link";
-import { AlertTriangle, FileText } from "lucide-react";
+import { CheckCircle2, Circle, FileText, Info } from "lucide-react";
 import { AdminBusinessActions } from "./admin-actions";
+import { DOCUMENT_TYPE_LABELS } from "@/lib/storage/business-documents";
 import {
-  DOCUMENT_TYPE_LABELS,
-  REQUIRED_DOCUMENT_TYPES,
-} from "@/lib/storage/business-documents";
-import type { BusinessDocument, BusinessDocumentType } from "@/types";
+  APPROVAL_FIELD_LABELS,
+  canApprove,
+  canVerifiedApprove,
+  getProfileCompleteness,
+  getMissingVerificationDocuments,
+} from "@/lib/business/profile-readiness";
+import type { BusinessDocument } from "@/types";
 
 interface AdminBusinessCardProps {
   business: {
     id: string;
     name: string;
     description?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    logo_url?: string | null;
+    province_id?: string | null;
+    city_id?: string | null;
     province?: { name: string } | null;
     city?: { name: string } | null;
+    business_categories?: { category_id: string }[];
     business_documents?: BusinessDocument[];
   };
 }
 
-function hasDocumentType(
-  documents: BusinessDocument[],
-  type: BusinessDocumentType
-) {
-  return documents.some((doc) => doc.document_type === type);
-}
-
 export function AdminBusinessCard({ business }: AdminBusinessCardProps) {
   const documents = business.business_documents ?? [];
-  const missingRequired = REQUIRED_DOCUMENT_TYPES.filter(
-    (type) => !hasDocumentType(documents, type)
+  const primaryCategoryId = business.business_categories?.[0]?.category_id;
+  const readiness = getProfileCompleteness(
+    business,
+    primaryCategoryId,
+    Boolean(business.logo_url)
+  );
+  const missingDocuments = getMissingVerificationDocuments(documents);
+  const approvalAllowed = canApprove(
+    business,
+    primaryCategoryId,
+    Boolean(business.logo_url)
+  );
+  const verifiedApprovalAllowed = canVerifiedApprove(
+    business,
+    documents,
+    primaryCategoryId,
+    Boolean(business.logo_url)
   );
 
   return (
     <div className="rounded-lg border p-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold">{business.name}</h3>
-            {missingRequired.length > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
-                <AlertTriangle className="h-3 w-3" />
-                Missing required documents
-              </span>
-            )}
-          </div>
+          <h3 className="font-semibold">{business.name}</h3>
           <p className="text-sm text-muted-foreground">
-            {business.city?.name}, {business.province?.name}
+            {business.city?.name ?? "No city"}, {business.province?.name ?? "No province"}
           </p>
-          <p className="mt-2 text-sm">{business.description?.slice(0, 200)}...</p>
+          {business.description && (
+            <p className="mt-2 text-sm">{business.description.slice(0, 200)}...</p>
+          )}
+
+          <div className="mt-4">
+            <p className="mb-2 text-sm font-medium">Listing readiness</p>
+            <ul className="grid gap-1 sm:grid-cols-2">
+              {APPROVAL_FIELD_LABELS.map((field) => {
+                const complete = !readiness.missingFields.includes(field);
+                const Icon = complete ? CheckCircle2 : Circle;
+                return (
+                  <li
+                    key={field}
+                    className={
+                      complete
+                        ? "flex items-center gap-1.5 text-xs text-sa-green"
+                        : "flex items-center gap-1.5 text-xs text-muted-foreground"
+                    }
+                  >
+                    <Icon className="h-3.5 w-3.5" aria-hidden />
+                    {field}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
 
           <div className="mt-4 space-y-2">
             <p className="text-sm font-medium">Verification Documents</p>
@@ -84,10 +119,11 @@ export function AdminBusinessCard({ business }: AdminBusinessCardProps) {
                 ))}
               </ul>
             )}
-            {missingRequired.length > 0 && (
-              <p className="text-xs text-amber-800">
-                Missing:{" "}
-                {missingRequired
+            {missingDocuments.length > 0 && (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Info className="h-3.5 w-3.5 text-sa-gold" aria-hidden />
+                No Verified badge — documents not uploaded:{" "}
+                {missingDocuments
                   .map((type) => DOCUMENT_TYPE_LABELS[type])
                   .join(", ")}
               </p>
@@ -95,7 +131,11 @@ export function AdminBusinessCard({ business }: AdminBusinessCardProps) {
           </div>
         </div>
 
-        <AdminBusinessActions businessId={business.id} />
+        <AdminBusinessActions
+          businessId={business.id}
+          canApprove={approvalAllowed}
+          canVerifiedApprove={verifiedApprovalAllowed}
+        />
       </div>
     </div>
   );

@@ -22,6 +22,7 @@ export default async function AdminBusinessesPage() {
       *,
       province:provinces(name),
       city:cities(name),
+      business_categories(category_id),
       business_documents(*)
     `)
     .eq("status", "pending")

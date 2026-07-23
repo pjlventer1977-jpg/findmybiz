@@ -27,7 +27,6 @@ interface ProfileFormProps {
     phone: string;
     email: string;
     website?: string | null;
-    address?: string | null;
     province_id?: string | null;
     city_id?: string | null;
     status: string;
@@ -52,7 +51,6 @@ export function ProfileForm({
   const [phone, setPhone] = useState(business.phone);
   const [email, setEmail] = useState(business.email);
   const [website, setWebsite] = useState(business.website ?? "");
-  const [address, setAddress] = useState(business.address ?? "");
   const [provinceId, setProvinceId] = useState(business.province_id ?? "");
   const [cityId, setCityId] = useState(business.city_id ?? "");
   const [categoryId, setCategoryId] = useState(primaryCategoryId ?? "");
@@ -97,7 +95,6 @@ export function ProfileForm({
           phone,
           email,
           website,
-          address,
           provinceId: provinceId || null,
           cityId: cityId || null,
           categoryId: categoryId || null,
@@ -139,7 +136,9 @@ export function ProfileForm({
         <CardHeader>
           <CardTitle>Verification Documents</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Upload or replace your verification documents. Replacing a document will require re-review.
+            Verification documents are optional for listing approval. Upload Proof of Address and
+            ID/Passport if you want a Verified badge on your public listing. CIPC is optional.
+            Replacing a document after approval may require re-review.
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -147,7 +146,6 @@ export function ProfileForm({
             businessId={business.id}
             documentType="proof_of_address"
             label="Proof of Address"
-            required
             existing={proofOfAddress}
             onUploaded={() => router.refresh()}
           />
@@ -155,7 +153,6 @@ export function ProfileForm({
             businessId={business.id}
             documentType="id_document"
             label="ID / Passport"
-            required
             existing={idDocument}
             onUploaded={() => router.refresh()}
           />
@@ -217,17 +214,6 @@ export function ProfileForm({
                   required
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="address">Physical Address</Label>
-              <Textarea
-                id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                rows={3}
-                placeholder="Street address, suburb, and postal code"
-              />
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
