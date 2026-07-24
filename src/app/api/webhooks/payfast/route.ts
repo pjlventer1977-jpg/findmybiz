@@ -3,6 +3,10 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { verifyPayFastITN } from "@/lib/payfast";
 import { getPlanByTier } from "@/constants/membership";
 import type { MembershipTier } from "@/types";
+import {
+  sendSubscriptionPaymentAdminEmail,
+  sendSubscriptionPaymentOwnerEmail,
+} from "@/lib/email/business-notifications";
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
@@ -67,7 +71,10 @@ export async function POST(request: NextRequest) {
 
       await supabase
         .from("businesses")
-        .update({ membership_tier: tier })
+        .update({
+          membership_tier: tier,
+          intended_membership_tier: tier,
+        })
         .eq("id", businessId);
 
       await supabase.from("lead_credits").upsert({
@@ -82,6 +89,40 @@ export async function POST(request: NextRequest) {
           .from("businesses")
           .update({ is_featured: true })
           .eq("id", businessId);
+      }
+
+      const { data: business } = await supabase
+        .from("businesses")
+        .select("id, name, email, contact_person")
+        .eq("id", businessId)
+        .single();
+
+      if (business) {
+        const amount = Number(postData.amount_gross) || Number(payment.amount);
+        const adminEmail = await sendSubscriptionPaymentAdminEmail({
+          businessId,
+          businessName: business.name,
+          businessEmail: business.email,
+          contactPerson: business.contact_person,
+          tier,
+          amount,
+          payfastPaymentId: postData.pf_payment_id ?? "Not provided",
+          paymentReference: mPaymentId,
+        });
+        const ownerEmail = await sendSubscriptionPaymentOwnerEmail({
+          businessName: business.name,
+          businessEmail: business.email,
+          contactPerson: business.contact_person,
+          tier,
+        });
+
+        if (!adminEmail.success || !ownerEmail.success) {
+          console.error("Subscription payment notification failed:", {
+            business_id: businessId,
+            admin_error: adminEmail.error,
+            owner_error: ownerEmail.error,
+          });
+        }
       }
       break;
     }

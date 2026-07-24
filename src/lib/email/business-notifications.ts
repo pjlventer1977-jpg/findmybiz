@@ -1,4 +1,6 @@
 import { getFromAddress, getMailTransporter, isSmtpConfigured, resetMailTransporter } from "./smtp";
+import { getPlanByTier } from "@/constants/membership";
+import type { MembershipTier } from "@/types";
 
 const DEFAULT_ADMIN_EMAIL = "info@findmybiz.co.za";
 
@@ -7,10 +9,16 @@ interface BusinessEmailPayload {
   businessName: string;
   businessEmail: string;
   contactPerson?: string | null;
+  selectedTier?: MembershipTier;
 }
 
 interface BusinessProfileUpdatedPayload extends BusinessEmailPayload {
   changedFields: string[];
+}
+
+interface BusinessApprovalPayload extends BusinessEmailPayload {
+  selectedTier: MembershipTier;
+  billingUrl: string;
 }
 
 function escapeHtml(text: string): string {
@@ -75,6 +83,11 @@ export async function sendBusinessPendingAdminEmail(
   const appUrl = getAppUrl();
   const adminUrl = `${appUrl}/admin/businesses`;
   const contact = payload.contactPerson || "Not provided";
+  const selectedPlan = getPlanByTier(payload.selectedTier ?? "free");
+  const paymentStatus =
+    selectedPlan.tier === "free"
+      ? "Not applicable"
+      : "Pending — payment required after approval";
 
   return sendBusinessEmail({
     to: getAdminEmail(),
@@ -85,6 +98,9 @@ export async function sendBusinessPendingAdminEmail(
       `Business: ${payload.businessName}`,
       `Contact person: ${contact}`,
       `Email: ${payload.businessEmail}`,
+      `Selected plan: ${selectedPlan.name}`,
+      `Plan price: ${selectedPlan.price === 0 ? "Free" : `R${selectedPlan.price}/month`}`,
+      `Payment status: ${paymentStatus}`,
       "",
       `Review pending businesses: ${adminUrl}`,
     ].join("\n"),
@@ -102,6 +118,9 @@ export async function sendBusinessPendingAdminEmail(
       <tr><td style="padding: 8px 0; font-weight: bold; width: 140px;">Business</td><td>${escapeHtml(payload.businessName)}</td></tr>
       <tr><td style="padding: 8px 0; font-weight: bold;">Contact person</td><td>${escapeHtml(contact)}</td></tr>
       <tr><td style="padding: 8px 0; font-weight: bold;">Email</td><td><a href="mailto:${escapeHtml(payload.businessEmail)}">${escapeHtml(payload.businessEmail)}</a></td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">Selected plan</td><td>${escapeHtml(selectedPlan.name)}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">Plan price</td><td>${selectedPlan.price === 0 ? "Free" : `R${selectedPlan.price}/month`}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">Payment status</td><td>${escapeHtml(paymentStatus)}</td></tr>
     </table>
     <div style="text-align: center; margin-top: 24px;">
       <a href="${adminUrl}" style="display: inline-block; background: #007A4D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Review in Admin</a>
@@ -204,9 +223,11 @@ export async function sendBusinessProfileUpdatedAdminEmail(
 }
 
 export async function sendBusinessApprovedEmail(
-  payload: BusinessEmailPayload
+  payload: BusinessApprovalPayload
 ): Promise<{ success: boolean; error?: string }> {
   const appUrl = getAppUrl();
+  const selectedPlan = getPlanByTier(payload.selectedTier);
+  const isPaidPlan = selectedPlan.tier !== "free";
 
   return sendBusinessEmail({
     to: payload.businessEmail,
@@ -216,8 +237,15 @@ export async function sendBusinessApprovedEmail(
       "",
       `${payload.businessName} has been approved on Find My Biz.`,
       "Your listing is now live and can receive enquiries through the platform.",
+      ...(isPaidPlan
+        ? [
+            "",
+            `To activate your ${selectedPlan.name} membership (R${selectedPlan.price}/month), complete payment:`,
+            payload.billingUrl,
+          ]
+        : []),
       "",
-      `Manage your profile: ${appUrl}/dashboard`,
+      `Manage your profile: ${appUrl}/dashboard/profile`,
     ].join("\n"),
     html: `
 <!DOCTYPE html>
@@ -231,11 +259,101 @@ export async function sendBusinessApprovedEmail(
     <p>Hi ${escapeHtml(payload.contactPerson || payload.businessName)},</p>
     <p><strong>${escapeHtml(payload.businessName)}</strong> has been approved on Find My Biz.</p>
     <p>Your listing is now live and can receive enquiries through the platform.</p>
+    ${isPaidPlan ? `
+    <p>To activate your <strong>${escapeHtml(selectedPlan.name)}</strong> membership (R${selectedPlan.price}/month), complete payment when you are ready.</p>
     <div style="text-align: center; margin-top: 24px;">
-      <a href="${appUrl}/dashboard" style="display: inline-block; background: #007A4D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Manage Profile</a>
+      <a href="${payload.billingUrl}" style="display: inline-block; background: #F9B233; color: #1E293B; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Activate your plan — Pay now</a>
+    </div>` : ""}
+    <div style="text-align: center; margin-top: 24px;">
+      <a href="${appUrl}/dashboard/profile" style="display: inline-block; background: #007A4D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Manage Profile</a>
     </div>
   </div>
 </body>
 </html>`,
+  });
+}
+
+export async function sendSubscriptionPaymentAdminEmail(payload: {
+  businessId: string;
+  businessName: string;
+  businessEmail: string;
+  contactPerson?: string | null;
+  tier: MembershipTier;
+  amount: number;
+  payfastPaymentId: string;
+  paymentReference: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const plan = getPlanByTier(payload.tier);
+  const adminUrl = `${getAppUrl()}/admin/businesses`;
+  const contact = payload.contactPerson || "Not provided";
+
+  return sendBusinessEmail({
+    to: getAdminEmail(),
+    subject: `Subscription payment successful: ${payload.businessName}`,
+    text: [
+      "PayFast status: Successful (COMPLETE)",
+      "",
+      `Business: ${payload.businessName}`,
+      `Contact person: ${contact}`,
+      `Email: ${payload.businessEmail}`,
+      `Plan: ${plan.name}`,
+      `Amount: R${payload.amount.toFixed(2)}`,
+      `PayFast payment ID: ${payload.payfastPaymentId}`,
+      `Internal reference: ${payload.paymentReference}`,
+      "",
+      `Review business: ${adminUrl}`,
+    ].join("\n"),
+    html: `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #007A4D; color: white; padding: 20px; border-radius: 8px 8px 0 0;"><h1 style="margin: 0; font-size: 22px;">Subscription Payment Successful</h1></div>
+  <div style="border: 1px solid #e5e5e5; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+    <p>PayFast status: <strong>Successful (COMPLETE)</strong></p>
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr><td style="padding: 8px 0; font-weight: bold; width: 150px;">Business</td><td>${escapeHtml(payload.businessName)}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">Contact person</td><td>${escapeHtml(contact)}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">Email</td><td>${escapeHtml(payload.businessEmail)}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">Plan</td><td>${escapeHtml(plan.name)}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">Amount</td><td>R${payload.amount.toFixed(2)}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">PayFast ID</td><td>${escapeHtml(payload.payfastPaymentId)}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">Reference</td><td>${escapeHtml(payload.paymentReference)}</td></tr>
+    </table>
+    <div style="text-align: center; margin-top: 24px;"><a href="${adminUrl}" style="display: inline-block; background: #007A4D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Review in Admin</a></div>
+  </div>
+</body></html>`,
+  });
+}
+
+export async function sendSubscriptionPaymentOwnerEmail(payload: {
+  businessName: string;
+  businessEmail: string;
+  contactPerson?: string | null;
+  tier: MembershipTier;
+}): Promise<{ success: boolean; error?: string }> {
+  const plan = getPlanByTier(payload.tier);
+  const dashboardUrl = `${getAppUrl()}/dashboard`;
+
+  return sendBusinessEmail({
+    to: payload.businessEmail,
+    subject: `Payment received — your ${plan.name} plan is active`,
+    text: [
+      `Hi ${payload.contactPerson || payload.businessName},`,
+      "",
+      `Payment received. Your ${plan.name} membership is now active on Find My Biz.`,
+      "",
+      `Dashboard: ${dashboardUrl}`,
+    ].join("\n"),
+    html: `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #007A4D; color: white; padding: 20px; border-radius: 8px 8px 0 0;"><h1 style="margin: 0; font-size: 22px;">Payment Received</h1></div>
+  <div style="border: 1px solid #e5e5e5; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+    <p>Hi ${escapeHtml(payload.contactPerson || payload.businessName)},</p>
+    <p>Payment received. Your <strong>${escapeHtml(plan.name)}</strong> membership is now active on Find My Biz.</p>
+    <div style="text-align: center; margin-top: 24px;"><a href="${dashboardUrl}" style="display: inline-block; background: #007A4D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Open Dashboard</a></div>
+  </div>
+</body></html>`,
   });
 }

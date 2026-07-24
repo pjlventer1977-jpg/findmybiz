@@ -12,7 +12,7 @@ export async function notifyPendingBusinessRegistration(
   const serviceClient = await createServiceClient();
   const { data: business, error } = await serviceClient
     .from("businesses")
-    .select("id, owner_id, name, email, contact_person, status")
+    .select("id, owner_id, name, email, contact_person, status, intended_membership_tier")
     .eq("id", businessId)
     .single();
 
@@ -33,6 +33,7 @@ export async function notifyPendingBusinessRegistration(
     businessName: business.name,
     businessEmail: business.email,
     contactPerson: business.contact_person,
+    selectedTier: business.intended_membership_tier,
   };
 
   // Send sequentially: the cPanel SMTP account is used by both messages and

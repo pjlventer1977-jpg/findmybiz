@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { createSubscriptionPayment, createCreditPackPayment } from "@/lib/payfast";
+import {
+  createSubscriptionPayment,
+  createCreditPackPayment,
+} from "@/lib/payfast";
 import { randomUUID } from "crypto";
 import type { MembershipTier } from "@/types";
+import { getPlanByTier } from "@/constants/membership";
 
 const VALID_TIERS: MembershipTier[] = ["starter", "professional", "enterprise"];
 
@@ -19,19 +23,26 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { type, business_id, tier, credits, amount } = body;
 
-  if (!business_id || !type || amount == null) {
+  if (!business_id || !type || (type !== "subscription" && amount == null)) {
     return NextResponse.json({ error: "Missing payment details" }, { status: 400 });
   }
 
   const { data: business } = await supabase
     .from("businesses")
-    .select("id")
+    .select("id, status, membership_tier, intended_membership_tier")
     .eq("id", business_id)
     .eq("owner_id", user.id)
     .single();
 
   if (!business) {
     return NextResponse.json({ error: "Business not found" }, { status: 404 });
+  }
+
+  if (type === "subscription" && business.status !== "approved") {
+    return NextResponse.json(
+      { error: "Your business must be approved before activating a paid plan." },
+      { status: 400 }
+    );
   }
 
   if (!process.env.PAYFAST_MERCHANT_ID || !process.env.PAYFAST_MERCHANT_KEY) {
@@ -43,10 +54,30 @@ export async function POST(request: NextRequest) {
 
   const paymentId = randomUUID();
   const serviceClient = await createServiceClient();
+  let paymentAmount = Number(amount);
+
+  if (type === "subscription") {
+    if (!tier || !VALID_TIERS.includes(tier)) {
+      return NextResponse.json({ error: "Invalid membership tier" }, { status: 400 });
+    }
+
+    if (
+      business.membership_tier === "free" &&
+      business.intended_membership_tier !== "free" &&
+      tier !== business.intended_membership_tier
+    ) {
+      return NextResponse.json(
+        { error: "Please activate the plan selected during registration." },
+        { status: 400 }
+      );
+    }
+
+    paymentAmount = getPlanByTier(tier).price;
+  }
 
   const { error: paymentError } = await serviceClient.from("payments").insert({
     business_id,
-    amount,
+    amount: paymentAmount,
     payment_type: type,
     status: "pending",
     m_payment_id: paymentId,
@@ -61,14 +92,11 @@ export async function POST(request: NextRequest) {
   let formData;
 
   if (type === "subscription") {
-    if (!tier || !VALID_TIERS.includes(tier)) {
-      return NextResponse.json({ error: "Invalid membership tier" }, { status: 400 });
-    }
     formData = createSubscriptionPayment({
       businessId: business_id,
       email: user.email!,
       tierName: tier,
-      amount: Number(amount),
+      amount: paymentAmount,
       paymentId,
     });
   } else if (type === "lead_credits") {

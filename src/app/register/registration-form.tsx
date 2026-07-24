@@ -8,12 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { MEMBERSHIP_PLANS } from "@/constants/membership";
 import { registerBusinessAccount } from "./actions";
 
 export function BusinessRegistrationForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTier, setSelectedTier] = useState("free");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,6 +29,7 @@ export function BusinessRegistrationForm() {
       phone: String(formData.get("phone") ?? ""),
       email: String(formData.get("email") ?? ""),
       password: String(formData.get("password") ?? ""),
+      selectedTier: selectedTier as "free" | "starter" | "professional" | "enterprise",
     });
 
     if (!result.ok) {
@@ -100,6 +103,42 @@ export function BusinessRegistrationForm() {
               Use at least 6 characters.
             </p>
           </div>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">Choose your plan</legend>
+            <p className="text-xs text-slate-500">
+              Payment is only required after your business is approved.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {MEMBERSHIP_PLANS.map((plan) => (
+                <label
+                  key={plan.tier}
+                  className={`cursor-pointer rounded-xl border p-3 transition-colors ${
+                    selectedTier === plan.tier
+                      ? "border-sa-gold bg-sa-gold/10 ring-1 ring-sa-gold/40"
+                      : "border-slate-200 hover:border-sa-gold/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="selectedTier"
+                    value={plan.tier}
+                    checked={selectedTier === plan.tier}
+                    onChange={() => setSelectedTier(plan.tier)}
+                    className="sr-only"
+                  />
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-sa-blue">{plan.name}</span>
+                    <span className="text-sm font-bold text-slate-900">
+                      {plan.price === 0 ? "Free" : `R${plan.price}/mo`}
+                    </span>
+                  </span>
+                  <span className="mt-1 block text-xs text-slate-600">
+                    {plan.leadsPerMonth} lead{plan.leadsPerMonth === 1 ? "" : "s"} per month
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { slugify } from "@/lib/utils";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { notifyPendingBusinessRegistration } from "@/lib/email/registration-notifications";
+import type { MembershipTier } from "@/types";
 
 const registrationSchema = z.object({
   businessName: z.string().trim().min(2).max(160),
@@ -11,6 +12,7 @@ const registrationSchema = z.object({
   phone: z.string().trim().min(5).max(30),
   email: z.string().trim().email().max(255),
   password: z.string().min(6).max(72),
+  selectedTier: z.enum(["free", "starter", "professional", "enterprise"]),
 });
 
 export async function registerBusinessAccount(input: {
@@ -19,6 +21,7 @@ export async function registerBusinessAccount(input: {
   phone: string;
   email: string;
   password: string;
+  selectedTier: MembershipTier;
 }) {
   const parsed = registrationSchema.safeParse(input);
   if (!parsed.success) {
@@ -28,7 +31,7 @@ export async function registerBusinessAccount(input: {
     };
   }
 
-  const { businessName, contactPerson, phone, email, password } = parsed.data;
+  const { businessName, contactPerson, phone, email, password, selectedTier } = parsed.data;
   const supabase = await createClient();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.findmybiz.co.za";
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -61,6 +64,8 @@ export async function registerBusinessAccount(input: {
       phone,
       whatsapp: phone,
       status: "pending",
+      membership_tier: "free",
+      intended_membership_tier: selectedTier,
     })
     .select("id")
     .single();

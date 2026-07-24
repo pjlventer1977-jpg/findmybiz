@@ -41,7 +41,7 @@ export async function PATCH(
   const { data: business, error: fetchError } = await supabase
     .from("businesses")
     .select(
-      "id, status, name, email, contact_person, description, phone, province_id, city_id, logo_url, business_categories(category_id), business_documents(*)"
+      "id, status, name, email, contact_person, description, phone, province_id, city_id, logo_url, intended_membership_tier, business_categories(category_id), business_documents(*)"
     )
     .eq("id", businessId)
     .single();
@@ -113,6 +113,8 @@ export async function PATCH(
       businessName: business.name,
       businessEmail: business.email,
       contactPerson: business.contact_person,
+      selectedTier: business.intended_membership_tier,
+      billingUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.findmybiz.co.za"}/dashboard/billing?plan=${business.intended_membership_tier}`,
     });
 
     if (!emailResult.success) {

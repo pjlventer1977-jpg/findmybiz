@@ -13,7 +13,12 @@ export default async function BillingPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Billing & Membership</h1>
-      <BillingClient businessId={business.id} currentTier={business.membership_tier} />
+      <BillingClient
+        businessId={business.id}
+        currentTier={business.membership_tier}
+        selectedTier={business.intended_membership_tier ?? business.membership_tier}
+        businessStatus={business.status}
+      />
     </div>
   );
 }

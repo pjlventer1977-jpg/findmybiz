@@ -67,6 +67,7 @@ export interface Business {
   longitude?: number;
   logo_url?: string;
   membership_tier: MembershipTier;
+  intended_membership_tier?: MembershipTier;
   status: BusinessStatus;
   is_verified: boolean;
   is_featured: boolean;
