@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Check, MessageCircle, Smartphone } from "lucide-react";
-import { BusinessCard } from "@/components/business/business-card";
 import { EmptyState } from "@/components/home/empty-state";
+import { FeaturedBusinessesCarousel } from "@/components/home/featured-businesses-carousel";
 import { SectionHeader } from "@/components/home/section-header";
 import { SectionShell } from "@/components/home/section-shell";
 import { Button } from "@/components/ui/button";
@@ -26,15 +26,11 @@ export function FeaturedQuotesSection({ businesses }: FeaturedQuotesSectionProps
           <div className="min-w-0">
             <SectionHeader title="Featured Businesses" viewAllHref="/search" />
             {businesses.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4">
-                {businesses.map((business) => (
-                  <BusinessCard key={business.id} business={business} />
-                ))}
-              </div>
+              <FeaturedBusinessesCarousel businesses={businesses} />
             ) : (
               <EmptyState
-                title="No featured businesses yet"
-                description="Check back soon as new verified businesses join FindMyBiz."
+                title="No Professional or Enterprise businesses yet"
+                description="Check back soon as premium South African businesses join FindMyBiz."
               />
             )}
           </div>

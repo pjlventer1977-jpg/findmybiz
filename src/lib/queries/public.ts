@@ -154,7 +154,7 @@ export async function getBusinessBySlug(slug: string): Promise<Business | null> 
   };
 }
 
-export async function getFeaturedBusinesses(limit = 6): Promise<Business[]> {
+export async function getFeaturedBusinesses(): Promise<Business[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("businesses")
@@ -165,17 +165,23 @@ export async function getFeaturedBusinesses(limit = 6): Promise<Business[]> {
       categories:business_categories(category:categories(*))
     `)
     .eq("status", "approved")
-    .or("is_featured.eq.true,membership_tier.eq.enterprise")
+    .in("membership_tier", ["professional", "enterprise"])
     .order("biz_trust_score", { ascending: false })
-    .limit(limit);
+    .limit(1000);
 
-  return (data ?? []).map((business) => ({
-    ...business,
-    categories:
-      business.categories?.map(
-        (entry: { category: Category }) => entry.category
-      ) ?? [],
-  }));
+  return (data ?? [])
+    .map((business) => ({
+      ...business,
+      categories:
+        business.categories?.map(
+          (entry: { category: Category }) => entry.category
+        ) ?? [],
+    }))
+    .sort((a, b) => {
+      const tierRank = { enterprise: 2, professional: 1 } as const;
+      return tierRank[b.membership_tier as keyof typeof tierRank] -
+        tierRank[a.membership_tier as keyof typeof tierRank];
+    });
 }
 
 export async function getLatestSpecials(limit = 6): Promise<Special[]> {

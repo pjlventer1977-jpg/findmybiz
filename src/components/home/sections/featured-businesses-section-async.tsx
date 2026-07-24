@@ -4,7 +4,7 @@ import { FeaturedBusinessesSection } from "@/components/home/sections/featured-b
 import { FeaturedBusinessesSkeleton } from "@/components/home/skeletons";
 
 async function FeaturedBusinessesContent() {
-  const businesses = await getFeaturedBusinesses(4);
+  const businesses = await getFeaturedBusinesses();
   return <FeaturedBusinessesSection businesses={businesses} />;
 }
 

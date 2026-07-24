@@ -4,7 +4,7 @@ import { FeaturedQuotesSection } from "@/components/home/sections/featured-quote
 import { FeaturedBusinessesSkeleton } from "@/components/home/skeletons";
 
 async function FeaturedQuotesContent() {
-  const businesses = await getFeaturedBusinesses(4);
+  const businesses = await getFeaturedBusinesses();
   return <FeaturedQuotesSection businesses={businesses} />;
 }
 
