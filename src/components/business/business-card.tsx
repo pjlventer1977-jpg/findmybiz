@@ -37,6 +37,7 @@ export function BusinessCard({
     <article
       className={cn(
         "group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+        "relative",
         isFeatured &&
           "border-sa-gold/30 ring-1 ring-sa-gold/40 shadow-md hover:-translate-y-1 hover:shadow-xl",
         className
@@ -49,7 +50,7 @@ export function BusinessCard({
             isFeatured
               ? "border-b border-slate-100 bg-white"
               : "bg-gradient-to-br from-sa-blue via-sa-green to-sa-blue/80",
-            compact ? (isFeatured ? "h-28" : "h-24") : isFeatured ? "h-36" : "h-32"
+            compact ? (isFeatured ? "h-32" : "h-24") : isFeatured ? "h-36" : "h-32"
           )}
         >
           {business.logo_url && (
@@ -60,13 +61,18 @@ export function BusinessCard({
               sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
               className={cn(
                 isFeatured
-                  ? "object-contain object-center p-3 opacity-25"
+                  ? "object-contain object-center p-5"
                   : "object-cover opacity-35"
               )}
             />
           )}
+          {isFeatured && !business.logo_url && (
+            <span className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-sa-green">
+              {business.name.charAt(0)}
+            </span>
+          )}
           <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-            {showPremium && (
+            {showPremium && !isFeatured && (
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase text-slate-900 shadow-sm",
@@ -76,7 +82,7 @@ export function BusinessCard({
                 Premium
               </span>
             )}
-            {business.is_verified && (
+            {business.is_verified && !isFeatured && (
               <span
                 className={cn(
                   "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase shadow-sm",
@@ -93,31 +99,35 @@ export function BusinessCard({
         </div>
       </Link>
 
-      <div className={cn("relative", compact ? "p-3 pt-7" : "p-4 pt-8")}>
-        <Link
-          href={`/business/${business.slug}`}
-          className={cn(
-            "absolute flex items-center justify-center overflow-hidden rounded-xl border-4 border-white bg-white shadow-md",
-            compact ? "-top-6 left-3 h-12 w-12" : "-top-8 left-4 h-14 w-14"
-          )}
-        >
-          {business.logo_url ? (
-            <Image
-              src={business.logo_url}
-              alt={business.name}
-              width={compact ? 48 : 56}
-              height={compact ? 48 : 56}
-              className={cn(
-                "h-full w-full",
-                isFeatured ? "object-contain p-1" : "object-cover"
-              )}
-            />
-          ) : (
-            <span className="text-2xl font-bold text-sa-green">
-              {business.name.charAt(0)}
-            </span>
-          )}
-        </Link>
+      <div
+        className={cn(
+          "relative",
+          isFeatured ? (compact ? "p-3" : "p-4") : compact ? "p-3 pt-7" : "p-4 pt-8"
+        )}
+      >
+        {!isFeatured && (
+          <Link
+            href={`/business/${business.slug}`}
+            className={cn(
+              "absolute flex items-center justify-center overflow-hidden rounded-xl border-4 border-white bg-white shadow-md",
+              compact ? "-top-6 left-3 h-12 w-12" : "-top-8 left-4 h-14 w-14"
+            )}
+          >
+            {business.logo_url ? (
+              <Image
+                src={business.logo_url}
+                alt={business.name}
+                width={compact ? 48 : 56}
+                height={compact ? 48 : 56}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="text-2xl font-bold text-sa-green">
+                {business.name.charAt(0)}
+              </span>
+            )}
+          </Link>
+        )}
 
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
@@ -128,7 +138,7 @@ export function BusinessCard({
             </Link>
             <p className="text-[11px] text-muted-foreground">{category}</p>
           </div>
-          {business.is_verified && (
+          {business.is_verified && !isFeatured && (
             <BadgeCheck className="h-4 w-4 shrink-0 text-sa-green" aria-label="Verified" />
           )}
         </div>
@@ -215,6 +225,12 @@ export function BusinessCard({
           )}
         </div>
       </div>
+      {isFeatured && business.is_verified && (
+        <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-sa-green px-2 py-1 text-[9px] font-bold uppercase text-white shadow-sm">
+          <BadgeCheck className="h-3 w-3" />
+          Verified
+        </span>
+      )}
     </article>
   );
 }
