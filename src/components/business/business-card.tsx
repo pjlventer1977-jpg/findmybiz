@@ -45,7 +45,10 @@ export function BusinessCard({
       <Link href={`/business/${business.slug}`} className="block">
         <div
           className={cn(
-            "relative bg-gradient-to-br from-sa-blue via-sa-green to-sa-blue/80",
+            "relative",
+            isFeatured
+              ? "border-b border-slate-100 bg-white"
+              : "bg-gradient-to-br from-sa-blue via-sa-green to-sa-blue/80",
             compact ? (isFeatured ? "h-28" : "h-24") : isFeatured ? "h-36" : "h-32"
           )}
         >
@@ -55,7 +58,11 @@ export function BusinessCard({
               alt=""
               fill
               sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
-              className="object-cover opacity-35"
+              className={cn(
+                isFeatured
+                  ? "object-contain object-center p-3 opacity-25"
+                  : "object-cover opacity-35"
+              )}
             />
           )}
           <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
@@ -100,7 +107,10 @@ export function BusinessCard({
               alt={business.name}
               width={compact ? 48 : 56}
               height={compact ? 48 : 56}
-              className="h-full w-full object-cover"
+              className={cn(
+                "h-full w-full",
+                isFeatured ? "object-contain p-1" : "object-cover"
+              )}
             />
           ) : (
             <span className="text-2xl font-bold text-sa-green">
