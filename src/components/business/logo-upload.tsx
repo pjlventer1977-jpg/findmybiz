@@ -76,6 +76,21 @@ export function LogoUpload({
         businessId,
         file
       );
+      try {
+        const notification = await fetch(
+          `/api/businesses/${businessId}/profile-change-notification`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ changedFields: ["Company logo"] }),
+          }
+        );
+        if (!notification.ok) {
+          console.warn("Profile review notification failed after logo upload.");
+        }
+      } catch {
+        console.warn("Profile review notification failed after logo upload.");
+      }
 
       setPreview(publicUrl);
       onUploaded?.(publicUrl);

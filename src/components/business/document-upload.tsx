@@ -69,6 +69,21 @@ export function DocumentUpload({
         file,
         documentType
       );
+      try {
+        const notification = await fetch(
+          `/api/businesses/${businessId}/profile-change-notification`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ changedFields: [`${label} document`] }),
+          }
+        );
+        if (!notification.ok) {
+          console.warn("Profile review notification failed after document upload.");
+        }
+      } catch {
+        console.warn("Profile review notification failed after document upload.");
+      }
 
       onUploaded?.();
     } catch (err) {

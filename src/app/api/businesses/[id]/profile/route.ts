@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
+import { sendBusinessProfileUpdatedAdminEmail } from "@/lib/email/business-notifications";
 
 const profileSchema = z.object({
   description: z.string().max(5000).optional().nullable(),
@@ -52,6 +53,25 @@ export async function PATCH(
 
     const { description, phone, email, website, provinceId, cityId, categoryId } =
       parsed.data;
+    const { data: currentCategory } = await supabase
+      .from("business_categories")
+      .select("category_id")
+      .eq("business_id", id)
+      .limit(1)
+      .maybeSingle();
+    const normalizedDescription = description?.trim() || null;
+    const normalizedPhone = phone.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedWebsite = normalizeWebsite(website);
+    const changedFields = [
+      normalizedDescription !== (business.description?.trim() || null) && "Description",
+      normalizedPhone !== business.phone && "Phone number",
+      normalizedEmail !== business.email.toLowerCase() && "Email address",
+      normalizedWebsite !== normalizeWebsite(business.website) && "Website",
+      (provinceId ?? null) !== (business.province_id ?? null) && "Province",
+      (cityId ?? null) !== (business.city_id ?? null) && "City / town",
+      categoryId && categoryId !== currentCategory?.category_id && "Primary category",
+    ].filter(Boolean) as string[];
 
     if (cityId) {
       if (!provinceId) {
@@ -78,10 +98,10 @@ export async function PATCH(
     const { error } = await supabase
       .from("businesses")
       .update({
-        description: description?.trim() || null,
-        phone: phone.trim(),
-        email: email.trim().toLowerCase(),
-        website: normalizeWebsite(website),
+        description: normalizedDescription,
+        phone: normalizedPhone,
+        email: normalizedEmail,
+        website: normalizedWebsite,
         province_id: provinceId ?? null,
         city_id: cityId ?? null,
         updated_at: new Date().toISOString(),
@@ -115,6 +135,23 @@ export async function PATCH(
           { error: addCategoryError.message },
           { status: 500 }
         );
+      }
+    }
+
+    if (changedFields.length > 0) {
+      const emailResult = await sendBusinessProfileUpdatedAdminEmail({
+        businessId: business.id,
+        businessName: business.name,
+        businessEmail: normalizedEmail,
+        contactPerson: business.contact_person,
+        changedFields,
+      });
+
+      if (!emailResult.success) {
+        console.error("Business profile update notification failed:", {
+          business_id: business.id,
+          error: emailResult.error,
+        });
       }
     }
 
