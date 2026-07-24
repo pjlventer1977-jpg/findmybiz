@@ -5,6 +5,7 @@ import { EventCard } from "@/components/home/cards/event-card";
 import { SectionHeader } from "@/components/home/section-header";
 import { SectionShell } from "@/components/home/section-shell";
 import { Button } from "@/components/ui/button";
+import { EVENT_DURATION_OPTIONS, EVENT_PRICE_WEEKLY } from "@/constants/membership";
 
 export const metadata = {
   title: "Events",
@@ -31,11 +32,25 @@ export default async function EventsPage() {
             <p className="mt-3 text-base leading-relaxed text-white/85 sm:text-lg">
               Markets · Festivals · Expos · Networking — across all 9 provinces.
             </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {EVENT_DURATION_OPTIONS.map((option) => (
+                <span
+                  key={option.weeks}
+                  className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm"
+                >
+                  {option.weeks} week{option.weeks === 1 ? "" : "s"} R{option.price}
+                </span>
+              ))}
+            </div>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/85">
+              From R{EVENT_PRICE_WEEKLY}. No account required — upload your poster, choose
+              duration, pay online. Admin approval before going live.
+            </p>
             <Button
               className="mt-6 h-11 rounded-lg bg-sa-gold px-5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-sa-gold/90"
               asChild
             >
-              <Link href="/dashboard/events">List an Event</Link>
+              <Link href="/events/list">List an Event</Link>
             </Button>
             <div className="mt-6 flex flex-wrap gap-2">
               {[
@@ -68,13 +83,15 @@ export default async function EventsPage() {
               <CalendarDays className="mx-auto h-11 w-11 text-sa-green" aria-hidden />
               <h2 className="mt-4 text-xl font-bold text-sa-blue">No upcoming events yet</h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600">
-                Markets, festivals, and business expos will appear here. Be the first to list yours.
+                Markets, festivals, and business expos will appear here. No account required —
+                upload your poster, choose 1 week (R99), 2 weeks (R198), or 4 weeks (R396), and
+                pay online. Admin approval before going live.
               </p>
               <Button
                 className="mt-6 h-11 rounded-lg bg-sa-gold px-5 text-sm font-semibold text-slate-900 hover:bg-sa-gold/90"
                 asChild
               >
-                <Link href="/dashboard/events">List an Event</Link>
+                <Link href="/events/list">List an Event</Link>
               </Button>
             </div>
           )}

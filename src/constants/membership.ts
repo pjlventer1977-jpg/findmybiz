@@ -92,6 +92,11 @@ export const TIER_PRIORITY: Record<MembershipTier, number> = {
 };
 
 export const EVENT_PRICE_WEEKLY = 99;
+export const EVENT_DURATION_OPTIONS = [
+  { weeks: 1, label: "1 week", price: EVENT_PRICE_WEEKLY },
+  { weeks: 2, label: "2 weeks", price: EVENT_PRICE_WEEKLY * 2 },
+  { weeks: 4, label: "4 weeks", price: EVENT_PRICE_WEEKLY * 4 },
+] as const;
 export const FEATURED_AD_WEEKLY = 49;
 export const FEATURED_AD_MONTHLY = 199;
 export const BANNER_HOME_WEEKLY = 299;

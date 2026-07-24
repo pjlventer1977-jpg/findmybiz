@@ -230,16 +230,17 @@ export function createEventPayment(params: {
   eventName: string;
   amount: number;
   paymentId: string;
+  durationWeeks: number;
 }) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
   return buildPayFastFormData({
-    return_url: `${appUrl}/dashboard/events?success=true`,
-    cancel_url: `${appUrl}/dashboard/events?cancelled=true`,
+    return_url: `${appUrl}/events/list/success`,
+    cancel_url: `${appUrl}/events/list?cancelled=true`,
     notify_url: `${appUrl}/api/webhooks/payfast`,
     email_address: params.email,
     m_payment_id: params.paymentId,
     amount: params.amount,
     item_name: `Event Listing: ${params.eventName}`,
-    item_description: "Find My Biz event listing (1 week)",
+    item_description: `Find My Biz event advert (${params.durationWeeks} week${params.durationWeeks === 1 ? "" : "s"})`,
   });
 }

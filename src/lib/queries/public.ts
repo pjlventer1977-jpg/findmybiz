@@ -225,7 +225,8 @@ export async function getUpcomingEvents(limit = 6): Promise<Event[]> {
       city:cities(name)
     `)
     .eq("status", "approved")
-    .gte("event_date", new Date().toISOString())
+    .eq("is_paid", true)
+    .gte("paid_until", new Date().toISOString())
     .order("event_date")
     .limit(limit);
 

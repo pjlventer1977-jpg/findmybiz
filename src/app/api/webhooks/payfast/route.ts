@@ -118,7 +118,11 @@ export async function POST(request: NextRequest) {
 
     case "event": {
       const eventId = metadata.event_id as string;
-      const paidUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const requestedWeeks = Number(metadata.duration_weeks);
+      const durationWeeks = [1, 2, 4].includes(requestedWeeks) ? requestedWeeks : 1;
+      const paidUntil = new Date(
+        Date.now() + durationWeeks * 7 * 24 * 60 * 60 * 1000
+      );
       await supabase
         .from("events")
         .update({ is_paid: true, paid_until: paidUntil.toISOString(), status: "pending" })
