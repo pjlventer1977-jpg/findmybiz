@@ -57,7 +57,13 @@ export async function SearchPageContent({ params }: SearchPageContentProps) {
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {businesses.map((business) => (
-                <BusinessCard key={business.id} business={business} compact />
+                <BusinessCard
+                  key={business.id}
+                  business={business}
+                  compact
+                  variant="featured"
+                  className="h-full"
+                />
               ))}
             </div>
           )}

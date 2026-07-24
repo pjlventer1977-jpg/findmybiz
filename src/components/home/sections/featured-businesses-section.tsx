@@ -18,7 +18,13 @@ export function FeaturedBusinessesSection({
         {businesses.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {businesses.map((business) => (
-              <BusinessCard key={business.id} business={business} />
+              <BusinessCard
+                key={business.id}
+                business={business}
+                compact
+                variant="featured"
+                className="h-full"
+              />
             ))}
           </div>
         ) : (
