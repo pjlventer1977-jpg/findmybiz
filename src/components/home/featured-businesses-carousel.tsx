@@ -23,18 +23,31 @@ export function FeaturedBusinessesCarousel({ businesses }: { businesses: Busines
     <div className="relative">
       <div
         ref={carouselRef}
-        className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3 pr-1 scrollbar-none"
+        className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-3 pr-1 scrollbar-none"
         aria-label="Featured Professional and Enterprise businesses"
       >
         {businesses.map((business) => (
           <div
             key={business.id}
-            className="w-[min(280px,82vw)] shrink-0 snap-start sm:w-[260px] lg:w-[calc((100%-2rem)/3)]"
+            className="w-[min(295px,84vw)] shrink-0 snap-start sm:w-[280px] lg:w-[calc((100%-2.5rem)/3)]"
           >
-            <BusinessCard business={business} compact className="h-full" />
+            <BusinessCard
+              business={business}
+              compact
+              variant="featured"
+              className="h-full"
+            />
           </div>
         ))}
       </div>
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/70 to-transparent"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/70 to-transparent"
+        aria-hidden
+      />
 
       {businesses.length > 1 && (
         <div className="mt-1 flex justify-end gap-2">
@@ -42,7 +55,7 @@ export function FeaturedBusinessesCarousel({ businesses }: { businesses: Busines
             type="button"
             variant="outline"
             size="icon"
-            className="h-8 w-8 rounded-full"
+            className="h-10 w-10 rounded-full border-sa-gold/60 bg-white shadow-sm hover:border-sa-gold hover:bg-sa-gold/10"
             onClick={() => scroll("previous")}
             aria-label="Show previous featured businesses"
           >
@@ -52,7 +65,7 @@ export function FeaturedBusinessesCarousel({ businesses }: { businesses: Busines
             type="button"
             variant="outline"
             size="icon"
-            className="h-8 w-8 rounded-full"
+            className="h-10 w-10 rounded-full border-sa-gold/60 bg-white shadow-sm hover:border-sa-gold hover:bg-sa-gold/10"
             onClick={() => scroll("next")}
             aria-label="Show next featured businesses"
           >

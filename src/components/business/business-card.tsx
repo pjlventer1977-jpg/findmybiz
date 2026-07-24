@@ -17,19 +17,28 @@ interface BusinessCardProps {
   business: Business;
   className?: string;
   compact?: boolean;
+  variant?: "default" | "featured";
 }
 
-export function BusinessCard({ business, className, compact = false }: BusinessCardProps) {
+export function BusinessCard({
+  business,
+  className,
+  compact = false,
+  variant = "default",
+}: BusinessCardProps) {
   const trust = getTrustBadgeLabel(business.biz_trust_score);
   const rating = Math.max(3.8, Math.min(5, business.biz_trust_score / 20));
   const location = [business.city?.name, business.province?.name].filter(Boolean).join(", ");
   const category = business.categories?.[0]?.name ?? "Local Business";
   const showPremium = business.is_featured || business.membership_tier !== "free";
+  const isFeatured = variant === "featured";
 
   return (
     <article
       className={cn(
         "group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+        isFeatured &&
+          "border-sa-gold/30 ring-1 ring-sa-gold/40 shadow-md hover:-translate-y-1 hover:shadow-xl",
         className
       )}
     >
@@ -37,7 +46,7 @@ export function BusinessCard({ business, className, compact = false }: BusinessC
         <div
           className={cn(
             "relative bg-gradient-to-br from-sa-blue via-sa-green to-sa-blue/80",
-            compact ? "h-24" : "h-32"
+            compact ? (isFeatured ? "h-28" : "h-24") : isFeatured ? "h-36" : "h-32"
           )}
         >
           {business.logo_url && (
@@ -51,12 +60,25 @@ export function BusinessCard({ business, className, compact = false }: BusinessC
           )}
           <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
             {showPremium && (
-              <span className="rounded-full bg-sa-gold px-2 py-0.5 text-[9px] font-bold uppercase text-slate-900 shadow-sm">
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase text-slate-900 shadow-sm",
+                  isFeatured ? "bg-gradient-to-r from-sa-gold to-amber-300" : "bg-sa-gold"
+                )}
+              >
                 Premium
               </span>
             )}
             {business.is_verified && (
-              <span className="rounded-full bg-white/95 px-2 py-0.5 text-[9px] font-bold uppercase text-sa-green shadow-sm">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase shadow-sm",
+                  isFeatured
+                    ? "bg-sa-green text-white"
+                    : "bg-white/95 text-sa-green"
+                )}
+              >
+                <BadgeCheck className="h-3 w-3" />
                 Verified
               </span>
             )}
