@@ -55,7 +55,11 @@ export default async function DashboardPage() {
         <div className="p-4 rounded-lg bg-sa-gold/20 border border-sa-gold">
           <p className="font-medium">Pending Verification</p>
           <p className="text-sm text-muted-foreground">
-            Your business is being reviewed. This usually takes 24–48 hours.
+            Please make sure all minimum requirements have been completed under your{" "}
+            <Link href="/dashboard/profile" className="font-medium text-primary underline">
+              Business Profile
+            </Link>{" "}
+            tab for approval. Review usually takes 24–48 hours once your profile is complete.
           </p>
         </div>
       )}

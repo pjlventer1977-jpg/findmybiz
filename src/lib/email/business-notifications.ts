@@ -126,9 +126,11 @@ export async function sendBusinessPendingOwnerEmail(
       `Thank you for registering ${payload.businessName} on Find My Biz.`,
       "Your business profile has been received and is pending admin approval.",
       "",
+      "Please make sure all minimum requirements have been completed under your Business Profile tab for approval.",
+      "",
       "We will email you again as soon as it has been approved.",
       "",
-      `Dashboard: ${appUrl}/dashboard`,
+      `Complete your business profile: ${appUrl}/dashboard/profile`,
     ].join("\n"),
     html: `
 <!DOCTYPE html>
@@ -141,9 +143,11 @@ export async function sendBusinessPendingOwnerEmail(
   <div style="border: 1px solid #e5e5e5; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
     <p>Hi ${escapeHtml(payload.contactPerson || payload.businessName)},</p>
     <p>Thank you for registering <strong>${escapeHtml(payload.businessName)}</strong> on Find My Biz.</p>
-    <p>Your business profile has been received and is pending admin approval. We will email you again as soon as it has been approved.</p>
+    <p>Your business profile has been received and is pending admin approval.</p>
+    <p>Please make sure all minimum requirements have been completed under your <strong>Business Profile</strong> tab for approval.</p>
+    <p>We will email you again as soon as it has been approved.</p>
     <div style="text-align: center; margin-top: 24px;">
-      <a href="${appUrl}/dashboard" style="display: inline-block; background: #007A4D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Dashboard</a>
+      <a href="${appUrl}/dashboard/profile" style="display: inline-block; background: #007A4D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Complete Business Profile</a>
     </div>
   </div>
 </body>
