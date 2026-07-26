@@ -97,6 +97,9 @@ export async function PATCH(
   }
 
   let bizTrustScore: number | undefined;
+  let emailNotification:
+    | { status: "sent" | "failed"; recipient: string; error?: string }
+    | undefined;
   if (action === "verified_approved") {
     await supabase
       .from("business_documents")
@@ -116,6 +119,28 @@ export async function PATCH(
       selectedTier: business.intended_membership_tier,
       billingUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.findmybiz.co.za"}/dashboard/billing?plan=${business.intended_membership_tier}`,
     });
+
+    emailNotification = {
+      status: emailResult.success ? "sent" : "failed",
+      recipient: business.email,
+      ...(emailResult.error ? { error: emailResult.error } : {}),
+    };
+
+    const { error: notificationAuditError } = await supabase
+      .from("email_notifications")
+      .insert({
+        business_id: business.id,
+        notification_type: "business_approved",
+        recipient: business.email,
+        subject: "Your Find My Biz business profile has been approved",
+        status: emailNotification.status,
+        error_message: emailResult.error ?? null,
+        attempted_by: auth.user.id,
+      });
+
+    if (notificationAuditError) {
+      console.error("Failed to record approval email notification:", notificationAuditError);
+    }
 
     if (!emailResult.success) {
       console.warn("Business approval email failed:", {
@@ -141,5 +166,6 @@ export async function PATCH(
     business_id: businessId,
     status: isApprovalAction ? "approved" : action,
     biz_trust_score: bizTrustScore,
+    email_notification: emailNotification,
   });
 }

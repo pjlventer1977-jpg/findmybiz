@@ -21,10 +21,19 @@ interface AdminBusinessCardProps {
     logo_url?: string | null;
     province_id?: string | null;
     city_id?: string | null;
+    status?: string | null;
     province?: { name: string } | null;
     city?: { name: string } | null;
     business_categories?: { category_id: string }[];
     business_documents?: BusinessDocument[];
+    email_notifications?: {
+      id: string;
+      notification_type: string;
+      recipient: string;
+      status: "sent" | "failed";
+      error_message?: string | null;
+      created_at: string;
+    }[];
   };
 }
 
@@ -48,6 +57,9 @@ export function AdminBusinessCard({ business }: AdminBusinessCardProps) {
     primaryCategoryId,
     Boolean(business.logo_url)
   );
+  const latestApprovalEmail = business.email_notifications
+    ?.filter((notification) => notification.notification_type.startsWith("business_approved"))
+    .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))[0];
 
   return (
     <div className="rounded-lg border p-4">
@@ -129,12 +141,44 @@ export function AdminBusinessCard({ business }: AdminBusinessCardProps) {
               </p>
             )}
           </div>
+
+          {business.status === "approved" && (
+            <div className="mt-4 rounded-md border bg-muted/30 px-3 py-2 text-sm">
+              <p className="font-medium">Approval email</p>
+              {latestApprovalEmail ? (
+                <>
+                  <p
+                    className={
+                      latestApprovalEmail.status === "sent"
+                        ? "text-sa-green"
+                        : "text-destructive"
+                    }
+                  >
+                    {latestApprovalEmail.status === "sent" ? "Sent" : "Failed"} to{" "}
+                    {latestApprovalEmail.recipient} on{" "}
+                    {new Date(latestApprovalEmail.created_at).toLocaleString("en-ZA")}
+                  </p>
+                  {latestApprovalEmail.error_message && (
+                    <p className="mt-1 text-xs text-destructive">
+                      {latestApprovalEmail.error_message}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-muted-foreground">
+                  No approval email attempt has been recorded yet.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <AdminBusinessActions
           businessId={business.id}
           canApprove={approvalAllowed}
           canVerifiedApprove={verifiedApprovalAllowed}
+          canResendApprovalEmail={business.status === "approved"}
+          isPending={business.status !== "approved"}
         />
       </div>
     </div>
