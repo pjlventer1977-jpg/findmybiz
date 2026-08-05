@@ -3,7 +3,12 @@ import { BillingClient } from "./billing-client";
 import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
 import { isLaunchPromoActive } from "@/constants/launch-promo";
 
-export default async function BillingPage() {
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string; cancelled?: string }>;
+}) {
+  const params = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -35,6 +40,13 @@ export default async function BillingPage() {
           subscription?.promo_full_amount != null
             ? Number(subscription.promo_full_amount)
             : null
+        }
+        paymentReturn={
+          params.success === "true" || params.success === "credits"
+            ? "success"
+            : params.cancelled === "true"
+              ? "cancelled"
+              : null
         }
       />
     </div>

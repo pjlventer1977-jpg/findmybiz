@@ -1,5 +1,6 @@
 import { getFromAddress, getMailTransporter, isSmtpConfigured, resetMailTransporter } from "./smtp";
 import { getPlanByTier } from "@/constants/membership";
+import { getCanonicalAppUrl } from "@/lib/app-url";
 import type { MembershipTier } from "@/types";
 
 const DEFAULT_ADMIN_EMAIL = "info@findmybiz.co.za";
@@ -30,7 +31,7 @@ function escapeHtml(text: string): string {
 }
 
 function getAppUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL ?? "https://www.findmybiz.co.za";
+  return getCanonicalAppUrl();
 }
 
 export function getAdminEmail(): string {

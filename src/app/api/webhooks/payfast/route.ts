@@ -55,6 +55,15 @@ export async function POST(request: NextRequest) {
   const rawBody = await request.text();
   const { data: postData, fieldOrder } = parsePayFastItnBody(rawBody);
 
+  console.info("PayFast ITN received", {
+    m_payment_id: postData.m_payment_id,
+    payment_status: postData.payment_status,
+    merchant_id: postData.merchant_id,
+    pf_payment_id: postData.pf_payment_id,
+    amount_gross: postData.amount_gross,
+    has_token: Boolean(postData.token),
+  });
+
   const signatureCheck = verifyPayFastITN(postData, fieldOrder);
   if (!signatureCheck.valid) {
     console.warn("PayFast ITN signature verification failed", {

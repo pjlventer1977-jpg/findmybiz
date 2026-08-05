@@ -166,9 +166,9 @@ describe("buildPayFastFormData subscription signatures", () => {
     const promoDescription =
       "Launch special — 50% off for 3 months. Then 149.50/mo.";
     const { fields } = buildPayFastFormData({
-      return_url: "https://findmybiz.co.za/dashboard/billing?success=true",
-      cancel_url: "https://findmybiz.co.za/dashboard/billing?cancelled=true",
-      notify_url: "https://findmybiz.co.za/api/webhooks/payfast",
+      return_url: "https://www.findmybiz.co.za/dashboard/billing?success=true",
+      cancel_url: "https://www.findmybiz.co.za/dashboard/billing?cancelled=true",
+      notify_url: "https://www.findmybiz.co.za/api/webhooks/payfast",
       email_address: "owner@example.com",
       m_payment_id: "payment-123",
       amount: 74.5,
@@ -192,5 +192,21 @@ describe("buildPayFastFormData subscription signatures", () => {
         ["item_description"]
       )
     ).toBe("69b16d08fdd046bef37861aa518c5a5d");
+  });
+
+  it("rewrites apex findmybiz.co.za notify_url to www for ITN delivery", async () => {
+    process.env.NEXT_PUBLIC_APP_URL = "https://findmybiz.co.za";
+    const { createSubscriptionPayment } = await import("./payfast");
+    const { fields } = createSubscriptionPayment({
+      businessId: "biz-1",
+      email: "owner@example.com",
+      tierName: "starter",
+      amount: 74.5,
+      paymentId: "pay-1",
+    });
+    expect(fields.notify_url).toBe(
+      "https://www.findmybiz.co.za/api/webhooks/payfast"
+    );
+    expect(fields.return_url).toContain("https://www.findmybiz.co.za/");
   });
 });

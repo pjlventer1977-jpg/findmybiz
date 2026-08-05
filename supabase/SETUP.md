@@ -136,4 +136,4 @@ UPDATE profiles SET role = 'admin' WHERE email = 'your@email.com';
 
 **RLS blocking inserts:** Business registration uses the anon key + authenticated user; ensure Auth is configured and user is logged in.
 
-**PayFast webhooks:** Set `NEXT_PUBLIC_APP_URL` to your production URL before going live.
+**PayFast webhooks:** Set `NEXT_PUBLIC_APP_URL` to `https://www.findmybiz.co.za` (with **www**). Apex `findmybiz.co.za` 308-redirects to www; PayFast ITN does not follow redirects, so payments would succeed on PayFast but never activate the plan.

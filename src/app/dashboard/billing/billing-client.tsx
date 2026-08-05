@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +23,7 @@ interface BillingClientProps {
   promoActive?: boolean;
   promoEndsAt?: string | null;
   promoFullAmount?: number | null;
+  paymentReturn?: "success" | "cancelled" | null;
 }
 
 export function BillingClient({
@@ -35,17 +36,61 @@ export function BillingClient({
   promoActive = false,
   promoEndsAt = null,
   promoFullAmount = null,
+  paymentReturn = null,
 }: BillingClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [confirmingPayment, setConfirmingPayment] = useState(
+    paymentReturn === "success" && !hasActiveSubscription
+  );
   const selectedPlan = getPlanByTier(selectedTier);
   const launchPromo = launchPromoEnabled;
   const hasPendingSelectedPlan =
     businessStatus === "approved" &&
     selectedTier !== "free" &&
     currentTier !== selectedTier;
+
+  useEffect(() => {
+    if (paymentReturn === "cancelled") {
+      setError("Payment was cancelled. Your plan was not changed.");
+      return;
+    }
+    if (paymentReturn !== "success") return;
+
+    if (hasActiveSubscription) {
+      setConfirmingPayment(false);
+      setSuccess("Payment received. Your paid plan is now active.");
+      return;
+    }
+
+    setConfirmingPayment(true);
+    setSuccess("Payment received — confirming with PayFast and activating your plan…");
+
+    let attempts = 0;
+    const maxAttempts = 8;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      router.refresh();
+      if (attempts >= maxAttempts) {
+        window.clearInterval(timer);
+        setConfirmingPayment(false);
+        setSuccess(
+          "Payment was submitted. If your plan is still Free after a minute, refresh this page or contact support — activation runs when PayFast notifies us."
+        );
+      }
+    }, 2500);
+
+    return () => window.clearInterval(timer);
+  }, [paymentReturn, hasActiveSubscription, router]);
+
+  useEffect(() => {
+    if (paymentReturn === "success" && hasActiveSubscription) {
+      setConfirmingPayment(false);
+      setSuccess("Payment received. Your paid plan is now active.");
+    }
+  }, [paymentReturn, hasActiveSubscription]);
 
   async function initiatePayment(type: string, data: Record<string, unknown>) {
     setLoading(type);
@@ -130,9 +175,14 @@ export function BillingClient({
         </div>
       )}
 
-      {success && (
+      {(success || confirmingPayment) && (
         <div className="rounded-lg border border-sa-green/40 bg-sa-green/10 px-4 py-3 text-sm text-sa-green">
           {success}
+          {confirmingPayment && (
+            <span className="mt-1 block text-slate-600">
+              This usually takes a few seconds. Stay on this page while we finish activating your plan.
+            </span>
+          )}
         </div>
       )}
 

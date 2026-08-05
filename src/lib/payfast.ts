@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { getCanonicalAppUrl } from "@/lib/app-url";
 
 const PAYFAST_URL =
   process.env.PAYFAST_SANDBOX === "true"
@@ -432,7 +433,8 @@ export function createSubscriptionPayment(params: {
   recurringAmount?: number;
   itemDescription?: string;
 }) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
+  // Must use www (non-redirecting) host — PayFast ITN does not follow 308 redirects.
+  const appUrl = getCanonicalAppUrl();
   const tierLabel = params.tierName.charAt(0).toUpperCase() + params.tierName.slice(1);
   const recurring = params.recurringAmount ?? params.amount;
   return buildPayFastFormData({
@@ -459,7 +461,7 @@ export function createCreditPackPayment(params: {
   amount: number;
   paymentId: string;
 }) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
+  const appUrl = getCanonicalAppUrl();
   return buildPayFastFormData({
     return_url: `${appUrl}/dashboard/billing?success=credits`,
     cancel_url: `${appUrl}/dashboard/billing?cancelled=true`,
@@ -479,7 +481,7 @@ export function createEventPayment(params: {
   paymentId: string;
   durationWeeks: number;
 }) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
+  const appUrl = getCanonicalAppUrl();
   return buildPayFastFormData({
     return_url: `${appUrl}/events/list/success`,
     cancel_url: `${appUrl}/events/list?cancelled=true`,
