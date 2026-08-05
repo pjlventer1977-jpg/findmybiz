@@ -2,6 +2,7 @@ export default function PopiaPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl prose prose-sm">
       <h1>POPIA Compliance</h1>
+      <p>Last updated: 5 August 2026</p>
       <p>
         Find My Biz is committed to compliance with the Protection of Personal Information Act
         (POPIA), Act 4 of 2013, of South Africa.

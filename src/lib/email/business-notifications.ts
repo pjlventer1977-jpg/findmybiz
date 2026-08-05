@@ -357,3 +357,40 @@ export async function sendSubscriptionPaymentOwnerEmail(payload: {
 </body></html>`,
   });
 }
+
+export async function sendSubscriptionPaymentFailedOwnerEmail(payload: {
+  businessName: string;
+  businessEmail: string;
+  contactPerson?: string | null;
+  tier: MembershipTier;
+  status: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const plan = getPlanByTier(payload.tier);
+  const billingUrl = `${getAppUrl()}/dashboard/billing`;
+  const statusLabel = payload.status.toUpperCase() === "CANCELLED" ? "cancelled" : "failed";
+
+  return sendBusinessEmail({
+    to: payload.businessEmail,
+    subject: `Subscription payment ${statusLabel} — Find My Biz`,
+    text: [
+      `Hi ${payload.contactPerson || payload.businessName},`,
+      "",
+      `Your Find My Biz ${plan.name} subscription payment was ${statusLabel}.`,
+      "Your listing has been moved to the Free plan. You can reactivate a paid plan anytime from Billing.",
+      "",
+      `Billing: ${billingUrl}`,
+    ].join("\n"),
+    html: `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #B45309; color: white; padding: 20px; border-radius: 8px 8px 0 0;"><h1 style="margin: 0; font-size: 22px;">Subscription Payment ${escapeHtml(statusLabel)}</h1></div>
+  <div style="border: 1px solid #e5e5e5; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+    <p>Hi ${escapeHtml(payload.contactPerson || payload.businessName)},</p>
+    <p>Your Find My Biz <strong>${escapeHtml(plan.name)}</strong> subscription payment was <strong>${escapeHtml(statusLabel)}</strong>.</p>
+    <p>Your listing has been moved to the Free plan. You can reactivate a paid plan anytime from Billing.</p>
+    <div style="text-align: center; margin-top: 24px;"><a href="${billingUrl}" style="display: inline-block; background: #007A4D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Open Billing</a></div>
+  </div>
+</body></html>`,
+  });
+}

@@ -2,7 +2,7 @@ export default function TermsPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl prose prose-sm">
       <h1>Terms of Service</h1>
-      <p>Last updated: {new Date().toLocaleDateString("en-ZA")}</p>
+      <p>Last updated: 5 August 2026</p>
       <p>
         By using Find My Biz (findmybiz.co.za), you agree to these terms. Please read them carefully.
       </p>
@@ -11,6 +11,7 @@ export default function TermsPage() {
         <li>You must provide accurate business information and valid verification documents</li>
         <li>Membership fees are billed monthly via PayFast</li>
         <li>Lead credits are allocated per plan and expire after 12 months for purchased packs</li>
+        <li>You may cancel a paid subscription from Billing; access reverts to the Free plan</li>
         <li>We reserve the right to suspend listings that violate our policies</li>
       </ul>
       <h2>For Customers</h2>

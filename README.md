@@ -10,7 +10,7 @@ Domain: [findmybiz.co.za](https://findmybiz.co.za)
 
 - **QuoteMatch Lead Engine** — Customers request quotes; platform routes to up to 5 verified businesses
 - **BizTrust Score (0–100)** — Composite trust badge based on verification, reviews, and response rate
-- **WhatsApp Lead Cards** — Instant formatted lead notifications via WhatsApp
+- **WhatsApp Lead Cards** — Lead emails and dashboard include pre-filled WhatsApp deep links so owners can reply in one tap (not WhatsApp Business API push)
 - **Local Champion Slots** — Premium category exclusivity per area (max 3 per category)
 - **Demand Insights Dashboard** — Search and profile view analytics
 - **Digital BizCard QR** — Printable QR linking to business profile
@@ -88,6 +88,24 @@ UPDATE profiles SET role = 'admin' WHERE email = 'your@email.com';
 | Starter | R149 | 3 | 2 |
 | Professional | R299 | 10 | 5 |
 | Enterprise | R500 | 20 | Unlimited |
+
+## Payments (PayFast)
+
+Subscriptions, lead credit packs, and event listings use PayFast. Set `PAYFAST_SANDBOX=true` for testing.
+
+**Manual sandbox checklist**
+
+1. Approve a test business in Admin, then pay for a plan from Dashboard → Billing.
+2. Confirm the ITN activates the tier, stores `payfast_token`, and allocates monthly lead credits.
+3. Trigger a recurring COMPLETE ITN (or wait for the next cycle) and confirm period end extends and credits reset.
+4. Cancel from Billing and confirm the business returns to Free and PayFast cancels the token.
+5. Optionally send a FAILED/CANCELLED ITN and confirm downgrade + owner email.
+
+Unit tests for signature helpers, credit pack pricing, and renewal branching:
+
+```bash
+npm test
+```
 
 ## Deployment
 

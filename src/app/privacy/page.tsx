@@ -1,8 +1,10 @@
+import Link from "next/link";
+
 export default function PrivacyPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl prose prose-sm">
       <h1>Privacy Policy</h1>
-      <p>Last updated: {new Date().toLocaleDateString("en-ZA")}</p>
+      <p>Last updated: 5 August 2026</p>
       <p>
         Find My Biz (&quot;we&quot;, &quot;us&quot;) operates findmybiz.co.za. This policy explains how we collect,
         use, and protect your personal information in compliance with the Protection of Personal
@@ -13,6 +15,7 @@ export default function PrivacyPage() {
         <li>Business registration details (name, contact, address, documents)</li>
         <li>Customer quote request details (name, phone, email, service requirements)</li>
         <li>Usage analytics (profile views, search appearances)</li>
+        <li>Payment references processed via PayFast (we do not store full card details)</li>
       </ul>
       <h2>How We Use Your Information</h2>
       <ul>
@@ -25,6 +28,12 @@ export default function PrivacyPage() {
       <p>
         Customer contact details are shared with matched businesses only when explicit POPIA
         consent is given during quote requests. We do not sell personal data to third parties.
+        Payment processing is handled by PayFast; authentication and storage use Supabase.
+      </p>
+      <h2>Cookies</h2>
+      <p>
+        We use essential cookies for authentication and security. See our{" "}
+        <Link href="/cookies">Cookie Notice</Link> for details.
       </p>
       <h2>Your Rights</h2>
       <p>

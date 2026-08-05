@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPlanByTier, MEMBERSHIP_PLANS, LEAD_CREDIT_PACKS } from "@/constants/membership";
@@ -12,6 +13,7 @@ interface BillingClientProps {
   currentTier: string;
   selectedTier: MembershipTier;
   businessStatus: string;
+  hasActiveSubscription: boolean;
 }
 
 export function BillingClient({
@@ -19,9 +21,12 @@ export function BillingClient({
   currentTier,
   selectedTier,
   businessStatus,
+  hasActiveSubscription,
 }: BillingClientProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const selectedPlan = getPlanByTier(selectedTier);
   const hasPendingSelectedPlan =
     businessStatus === "approved" &&
@@ -31,6 +36,7 @@ export function BillingClient({
   async function initiatePayment(type: string, data: Record<string, unknown>) {
     setLoading(type);
     setError(null);
+    setSuccess(null);
 
     try {
       const res = await fetch("/api/payments/initiate", {
@@ -71,11 +77,48 @@ export function BillingClient({
     }
   }
 
+  async function cancelSubscription() {
+    const confirmed = window.confirm(
+      "Cancel your paid plan? You will be moved to the Free plan immediately and recurring billing will stop."
+    );
+    if (!confirmed) return;
+
+    setLoading("cancel");
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await fetch("/api/payments/cancel-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ business_id: businessId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Could not cancel subscription.");
+        setLoading(null);
+        return;
+      }
+      setSuccess("Subscription cancelled. You are now on the Free plan.");
+      setLoading(null);
+      router.refresh();
+    } catch {
+      setError("Could not cancel subscription. Please try again.");
+      setLoading(null);
+    }
+  }
+
   return (
     <div className="space-y-8">
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="rounded-lg border border-sa-green/40 bg-sa-green/10 px-4 py-3 text-sm text-sa-green">
+          {success}
         </div>
       )}
 
@@ -90,6 +133,28 @@ export function BillingClient({
             {selectedPlan.price}/month.
           </p>
         </div>
+      )}
+
+      {hasActiveSubscription && currentTier !== "free" && (
+        <section className="rounded-xl border border-slate-200 bg-white px-5 py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-sa-blue">Current subscription</h2>
+              <p className="text-sm text-slate-600">
+                You are on the {getPlanByTier(currentTier as MembershipTier).name} plan.
+                Cancel anytime to stop recurring PayFast billing.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              disabled={loading === "cancel"}
+              onClick={cancelSubscription}
+              className="border-destructive/40 text-destructive hover:bg-destructive/10"
+            >
+              {loading === "cancel" ? "Cancelling..." : "Cancel plan"}
+            </Button>
+          </div>
+        </section>
       )}
 
       <section>
@@ -131,7 +196,6 @@ export function BillingClient({
                   onClick={() =>
                     initiatePayment("subscription", {
                       tier: plan.tier,
-                      amount: plan.price,
                     })
                   }
                 >
@@ -167,7 +231,6 @@ export function BillingClient({
                   onClick={() =>
                     initiatePayment("lead_credits", {
                       credits: pack.credits,
-                      amount: pack.price,
                     })
                   }
                 >

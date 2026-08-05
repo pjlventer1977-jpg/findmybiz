@@ -10,6 +10,14 @@ export default async function BillingPage() {
 
   if (!business) return <p>Register a business first.</p>;
 
+  const { data: subscription } = await supabase
+    .from("subscriptions")
+    .select("status")
+    .eq("business_id", business.id)
+    .maybeSingle();
+
+  const hasActiveSubscription = subscription?.status === "active";
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Billing & Membership</h1>
@@ -18,6 +26,7 @@ export default async function BillingPage() {
         currentTier={business.membership_tier}
         selectedTier={business.intended_membership_tier ?? business.membership_tier}
         businessStatus={business.status}
+        hasActiveSubscription={hasActiveSubscription}
       />
     </div>
   );

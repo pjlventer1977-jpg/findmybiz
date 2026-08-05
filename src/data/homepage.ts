@@ -225,15 +225,16 @@ export const FOOTER_LINKS = {
     { label: "Browse Categories", href: "/search" },
   ],
   about: [
-    { label: "About Us", href: "/pricing" },
+    { label: "About Us", href: "/" },
     { label: "Pricing", href: "/pricing" },
     { label: "New Business", href: "/register" },
     { label: "Dashboard", href: "/dashboard" },
   ],
   support: [
-    { label: "Help Centre", href: "/terms" },
+    { label: "Contact Support", href: "mailto:support@findmybiz.co.za" },
     { label: "Terms", href: "/terms" },
     { label: "Privacy", href: "/privacy" },
+    { label: "Cookies", href: "/cookies" },
     { label: "POPIA", href: "/popia" },
   ],
 } as const;

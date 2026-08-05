@@ -7,6 +7,7 @@ import {
 import { randomUUID } from "crypto";
 import type { MembershipTier } from "@/types";
 import { getPlanByTier } from "@/constants/membership";
+import { resolveLeadCreditPack } from "@/lib/payments/credit-packs";
 
 const VALID_TIERS: MembershipTier[] = ["starter", "professional", "enterprise"];
 
@@ -21,9 +22,9 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { type, business_id, tier, credits, amount } = body;
+  const { type, business_id, tier, credits } = body;
 
-  if (!business_id || !type || (type !== "subscription" && amount == null)) {
+  if (!business_id || !type) {
     return NextResponse.json({ error: "Missing payment details" }, { status: 400 });
   }
 
@@ -54,7 +55,8 @@ export async function POST(request: NextRequest) {
 
   const paymentId = randomUUID();
   const serviceClient = await createServiceClient();
-  let paymentAmount = Number(amount);
+  let paymentAmount = 0;
+  let creditCount: number | undefined;
 
   if (type === "subscription") {
     if (!tier || !VALID_TIERS.includes(tier)) {
@@ -73,6 +75,15 @@ export async function POST(request: NextRequest) {
     }
 
     paymentAmount = getPlanByTier(tier).price;
+  } else if (type === "lead_credits") {
+    const pack = resolveLeadCreditPack(credits);
+    if (!pack) {
+      return NextResponse.json({ error: "Invalid credit pack" }, { status: 400 });
+    }
+    paymentAmount = pack.price;
+    creditCount = pack.credits;
+  } else {
+    return NextResponse.json({ error: "Invalid payment type" }, { status: 400 });
   }
 
   const { error: paymentError } = await serviceClient.from("payments").insert({
@@ -81,7 +92,7 @@ export async function POST(request: NextRequest) {
     payment_type: type,
     status: "pending",
     m_payment_id: paymentId,
-    metadata: { business_id, tier, credits, type },
+    metadata: { business_id, tier, credits: creditCount, type },
   });
 
   if (paymentError) {
@@ -99,18 +110,13 @@ export async function POST(request: NextRequest) {
       amount: paymentAmount,
       paymentId,
     });
-  } else if (type === "lead_credits") {
-    if (!credits) {
-      return NextResponse.json({ error: "Invalid credit pack" }, { status: 400 });
-    }
+  } else {
     formData = createCreditPackPayment({
       email: user.email!,
-      credits: Number(credits),
-      amount: Number(amount),
+      credits: creditCount!,
+      amount: paymentAmount,
       paymentId,
     });
-  } else {
-    return NextResponse.json({ error: "Invalid payment type" }, { status: 400 });
   }
 
   return NextResponse.json(formData);

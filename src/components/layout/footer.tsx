@@ -1,21 +1,22 @@
 import Link from "next/link";
 import Image from "next/image";
-import {
-  Facebook,
-  Instagram,
-  Linkedin,
-  MessageCircle,
-  Youtube,
-} from "lucide-react";
 import { FOOTER_LINKS } from "@/data/homepage";
 
-const SOCIAL_LINKS = [
-  { label: "Facebook", icon: Facebook, href: "#" },
-  { label: "Instagram", icon: Instagram, href: "#" },
-  { label: "LinkedIn", icon: Linkedin, href: "#" },
-  { label: "YouTube", icon: Youtube, href: "#" },
-  { label: "WhatsApp", icon: MessageCircle, href: "#" },
-] as const;
+function FooterNavLink({ label, href }: { label: string; href: string }) {
+  const external = href.startsWith("mailto:") || href.startsWith("http");
+  if (external) {
+    return (
+      <a href={href} className="transition-colors hover:text-white">
+        {label}
+      </a>
+    );
+  }
+  return (
+    <Link href={href} className="transition-colors hover:text-white">
+      {label}
+    </Link>
+  );
+}
 
 export function Footer() {
   return (
@@ -40,18 +41,15 @@ export function Footer() {
               Connecting South African customers with trusted local businesses,
               quotes, specials and events.
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {SOCIAL_LINKS.map(({ label, icon: Icon, href }) => (
-                <a
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-white/20"
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                </a>
-              ))}
-            </div>
+            <p className="mt-3 text-sm text-white/80">
+              Support:{" "}
+              <a
+                href="mailto:support@findmybiz.co.za"
+                className="underline decoration-white/40 underline-offset-2 hover:text-white"
+              >
+                support@findmybiz.co.za
+              </a>
+            </p>
             <Link
               href="/register"
               className="mt-3 inline-flex rounded-lg bg-sa-gold px-4 py-1.5 text-sm font-semibold text-slate-900 transition-colors hover:bg-sa-gold/90"
@@ -65,9 +63,7 @@ export function Footer() {
             <ul className="space-y-1.5 text-sm text-white/80">
               {FOOTER_LINKS.find.map(({ label, href }) => (
                 <li key={label}>
-                  <Link href={href} className="transition-colors hover:text-white">
-                    {label}
-                  </Link>
+                  <FooterNavLink label={label} href={href} />
                 </li>
               ))}
             </ul>
@@ -78,9 +74,7 @@ export function Footer() {
             <ul className="space-y-1.5 text-sm text-white/80">
               {FOOTER_LINKS.quotes.map(({ label, href }) => (
                 <li key={label}>
-                  <Link href={href} className="transition-colors hover:text-white">
-                    {label}
-                  </Link>
+                  <FooterNavLink label={label} href={href} />
                 </li>
               ))}
             </ul>
@@ -91,9 +85,7 @@ export function Footer() {
             <ul className="space-y-1.5 text-sm text-white/80">
               {FOOTER_LINKS.about.map(({ label, href }) => (
                 <li key={label}>
-                  <Link href={href} className="transition-colors hover:text-white">
-                    {label}
-                  </Link>
+                  <FooterNavLink label={label} href={href} />
                 </li>
               ))}
             </ul>
@@ -104,9 +96,7 @@ export function Footer() {
             <ul className="space-y-1.5 text-sm text-white/80">
               {FOOTER_LINKS.support.map(({ label, href }) => (
                 <li key={label}>
-                  <Link href={href} className="transition-colors hover:text-white">
-                    {label}
-                  </Link>
+                  <FooterNavLink label={label} href={href} />
                 </li>
               ))}
             </ul>
@@ -121,6 +111,9 @@ export function Footer() {
             </Link>
             <Link href="/terms" className="transition-colors hover:text-white">
               Terms of Service
+            </Link>
+            <Link href="/cookies" className="transition-colors hover:text-white">
+              Cookies
             </Link>
             <Link href="/popia" className="transition-colors hover:text-white">
               POPIA

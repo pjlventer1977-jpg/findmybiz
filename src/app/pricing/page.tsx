@@ -4,6 +4,12 @@ import { SectionShell } from "@/components/home/section-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  BANNER_CATEGORY_MONTHLY,
+  BANNER_CATEGORY_WEEKLY,
+  BANNER_HOME_MONTHLY,
+  BANNER_HOME_WEEKLY,
+  FEATURED_AD_MONTHLY,
+  FEATURED_AD_WEEKLY,
   LEAD_CREDIT_PACKS,
   MEMBERSHIP_PLANS,
   type MembershipTier,
@@ -235,6 +241,49 @@ export default function PricingPage() {
             </div>
           ))}
         </div>
+        </section>
+
+        <section className="mx-auto mt-12 max-w-3xl border-t border-slate-200 pt-12 text-center">
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-sa-blue">
+            Coming soon
+          </p>
+          <h2 className="mb-3 text-2xl font-bold text-sa-blue">Featured &amp; Banner Ads</h2>
+          <p className="mx-auto mb-8 max-w-2xl text-sm leading-relaxed text-slate-600">
+            Homepage and category placements are priced below but not available for
+            self-serve purchase yet. Contact support if you need a sponsored placement.
+          </p>
+          <div className="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
+            {[
+              {
+                title: "Featured listing",
+                weekly: FEATURED_AD_WEEKLY,
+                monthly: FEATURED_AD_MONTHLY,
+              },
+              {
+                title: "Home banner",
+                weekly: BANNER_HOME_WEEKLY,
+                monthly: BANNER_HOME_MONTHLY,
+              },
+              {
+                title: "Category banner",
+                weekly: BANNER_CATEGORY_WEEKLY,
+                monthly: BANNER_CATEGORY_MONTHLY,
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-left opacity-90"
+              >
+                <p className="font-semibold text-sa-blue">{item.title}</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  {formatCurrency(item.weekly)}/week · {formatCurrency(item.monthly)}/month
+                </p>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Coming soon
+                </p>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="mx-auto mt-12 max-w-5xl rounded-2xl bg-gradient-to-r from-sa-green to-sa-blue px-6 py-8 text-center text-white shadow-lg sm:px-8">
