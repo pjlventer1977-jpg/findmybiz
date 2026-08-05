@@ -58,6 +58,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { logSearchAnalytics } = await import("@/lib/analytics/log-search");
+    void logSearchAnalytics({
+      categoryId: data.category_id,
+      provinceId: data.province_id,
+      cityId: data.city_id,
+      searchTerm: "get-quotes",
+      resultsCount: null,
+    });
+
     const { data: businesses } = await supabase
       .from("businesses")
       .select(`

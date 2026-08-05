@@ -1,6 +1,7 @@
 import { searchBusinesses, getProvinces, getCategories, getCategoryBySlug } from "@/lib/queries/public";
 import { BusinessCard } from "@/components/business/business-card";
 import { SearchAppearanceTracker } from "@/components/analytics/search-appearance-tracker";
+import { logSearchAnalytics } from "@/lib/analytics/log-search";
 import { SearchFilters } from "./search-filters";
 
 interface SearchPageContentProps {
@@ -26,6 +27,12 @@ export async function SearchPageContent({ params }: SearchPageContentProps) {
   ]);
 
   const categoryLabel = activeCategory?.name;
+
+  void logSearchAnalytics({
+    categoryId: activeCategory?.id,
+    searchTerm: params.q,
+    resultsCount: businesses.length,
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">

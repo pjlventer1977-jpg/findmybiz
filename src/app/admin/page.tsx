@@ -22,25 +22,28 @@ export default async function AdminPage() {
     { count: pendingReviews },
     { count: totalBusinesses },
     { count: totalLeads },
+    { count: totalRegistered },
   ] = await Promise.all([
     supabase.from("businesses").select("*", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("events").select("*", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("reviews").select("*", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("businesses").select("*", { count: "exact", head: true }).eq("status", "approved"),
     supabase.from("leads").select("*", { count: "exact", head: true }),
+    supabase.from("businesses").select("*", { count: "exact", head: true }),
   ]);
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
-          { label: "Pending Businesses", value: pendingBusinesses, href: "/admin/businesses" },
-          { label: "Approved Businesses", value: totalBusinesses, href: "/admin/businesses" },
+          { label: "Pending Businesses", value: pendingBusinesses, href: "/admin/businesses?status=pending" },
+          { label: "Approved Businesses", value: totalBusinesses, href: "/admin/businesses?status=approved" },
+          { label: "All Registered", value: totalRegistered, href: "/admin/businesses" },
           { label: "Pending Events", value: pendingEvents, href: "/admin/events" },
           { label: "Pending Reviews", value: pendingReviews, href: "/admin/reviews" },
-          { label: "Total Leads", value: totalLeads, href: "/admin/reports" },
+          { label: "Total Leads", value: totalLeads, href: "/admin/analytics" },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardHeader className="pb-2">
@@ -56,8 +59,9 @@ export default async function AdminPage() {
         ))}
       </div>
 
-      <div className="flex gap-4">
-        <Button asChild><Link href="/admin/businesses">Business Approvals</Link></Button>
+      <div className="flex flex-wrap gap-4">
+        <Button asChild><Link href="/admin/analytics">Analytics</Link></Button>
+        <Button asChild variant="outline"><Link href="/admin/businesses">Business Directory</Link></Button>
         <Button asChild variant="outline"><Link href="/admin/events">Event Moderation</Link></Button>
         <Button asChild variant="outline"><Link href="/admin/reviews">Review Moderation</Link></Button>
         <Button asChild variant="outline"><Link href="/admin/reports">Reports</Link></Button>
