@@ -23,6 +23,7 @@ interface BillingClientProps {
   promoActive?: boolean;
   promoEndsAt?: string | null;
   promoFullAmount?: number | null;
+  promoConvertedAt?: string | null;
   paymentReturn?: "success" | "cancelled" | null;
 }
 
@@ -36,6 +37,7 @@ export function BillingClient({
   promoActive = false,
   promoEndsAt = null,
   promoFullAmount = null,
+  promoConvertedAt = null,
   paymentReturn = null,
 }: BillingClientProps) {
   const router = useRouter();
@@ -47,6 +49,11 @@ export function BillingClient({
   );
   const selectedPlan = getPlanByTier(selectedTier);
   const launchPromo = launchPromoEnabled;
+  /** Site launch promo UI for people who can still start a discounted plan. */
+  const showPlanPromo =
+    launchPromo && (!hasActiveSubscription || promoActive);
+  const promoEndedOnSubscription =
+    hasActiveSubscription && !promoActive && (Boolean(promoConvertedAt) || promoFullAmount != null);
   const hasPendingSelectedPlan =
     businessStatus === "approved" &&
     selectedTier !== "free" &&
@@ -235,6 +242,25 @@ export function BillingClient({
                   {formatCurrency(Number(promoFullAmount))}/mo.
                 </p>
               )}
+              {promoEndedOnSubscription && (
+                <p className="mt-2 text-sm text-slate-700">
+                  Launch special ended
+                  {promoConvertedAt
+                    ? ` on ${new Date(promoConvertedAt).toLocaleDateString("en-ZA")}`
+                    : ""}
+                  . You are now billed at{" "}
+                  <strong>
+                    {formatCurrency(
+                      Number(
+                        promoFullAmount ??
+                          getPlanByTier(currentTier as MembershipTier).price
+                      )
+                    )}
+                    /mo
+                  </strong>
+                  .
+                </p>
+              )}
             </div>
             <Button
               variant="outline"
@@ -267,7 +293,7 @@ export function BillingClient({
             >
               <CardHeader>
                 <CardTitle>{plan.name}</CardTitle>
-                {launchPromo ? (
+                {showPlanPromo ? (
                   <div>
                     <p className="text-2xl font-bold text-sa-green">
                       {formatCurrency(promoPrice)}

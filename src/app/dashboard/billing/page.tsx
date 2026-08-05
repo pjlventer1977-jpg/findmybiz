@@ -18,7 +18,7 @@ export default async function BillingPage({
 
   const { data: subscription } = await supabase
     .from("subscriptions")
-    .select("status, promo_active, promo_ends_at, promo_full_amount")
+    .select("status, promo_active, promo_ends_at, promo_full_amount, promo_converted_at")
     .eq("business_id", business.id)
     .maybeSingle();
 
@@ -41,6 +41,7 @@ export default async function BillingPage({
             ? Number(subscription.promo_full_amount)
             : null
         }
+        promoConvertedAt={subscription?.promo_converted_at ?? null}
         paymentReturn={
           params.success === "true" || params.success === "credits"
             ? "success"
