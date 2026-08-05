@@ -10,6 +10,7 @@ import {
   Settings,
   Users,
   Inbox,
+  Shield,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getLeadCreditsBalance } from "@/lib/lead-credits";
@@ -39,7 +40,12 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/login?redirect=/dashboard");
 
-  const business = await getOwnerPrimaryBusiness(user.id);
+  const [business, { data: profile }] = await Promise.all([
+    getOwnerPrimaryBusiness(user.id),
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
+  ]);
+
+  const isAdmin = profile?.role === "admin";
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -68,6 +74,15 @@ export default async function DashboardLayout({
                   {label}
                 </Link>
               ))}
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="mt-2 flex items-center gap-2 rounded-md border border-sa-blue/20 bg-sa-blue/5 px-3 py-2 text-sm font-semibold text-sa-blue hover:bg-sa-blue/10"
+                >
+                  <Shield className="h-4 w-4" />
+                  Admin Panel
+                </Link>
+              )}
             </nav>
           </div>
         </aside>
