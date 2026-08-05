@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CategoryTreeSelect } from "@/components/categories/category-tree-select";
 import { createClient } from "@/lib/supabase/client";
 import type { Province, Category, City } from "@/types";
 
@@ -30,6 +31,7 @@ export function QuoteRequestForm({ provinces, categories }: QuoteRequestFormProp
   const [error, setError] = useState<string | null>(null);
   const [cities, setCities] = useState<City[]>([]);
   const [selectedProvince, setSelectedProvince] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [popiaConsent, setPopiaConsent] = useState(false);
 
   useEffect(() => {
@@ -56,19 +58,22 @@ export function QuoteRequestForm({ provinces, categories }: QuoteRequestFormProp
       return;
     }
 
+    if (!categoryId) {
+      setError("Please select a service category and subcategory.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     const formData = new FormData(e.currentTarget);
     const provinceSlug = formData.get("province") as string;
     const cityId = formData.get("city") as string;
-    const categorySlug = formData.get("category") as string;
 
     const province = provinces.find((p) => p.slug === provinceSlug);
-    const category = categories.find((c) => c.slug === categorySlug);
 
-    if (!province || !category) {
-      setError("Please select province and category.");
+    if (!province) {
+      setError("Please select province and city.");
       setLoading(false);
       return;
     }
@@ -83,7 +88,7 @@ export function QuoteRequestForm({ provinces, categories }: QuoteRequestFormProp
           customer_phone: formData.get("phone"),
           province_id: province.id,
           city_id: cityId,
-          category_id: category.id,
+          category_id: categoryId,
           service_description: formData.get("description"),
           budget: formData.get("budget") || null,
           popia_consent: true,
@@ -171,21 +176,15 @@ export function QuoteRequestForm({ provinces, categories }: QuoteRequestFormProp
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Service Category *</Label>
-            <Select name="category" required>
-              <SelectTrigger className="h-11 rounded-lg">
-                <SelectValue placeholder="What service do you need?" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.slug}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <CategoryTreeSelect
+            categories={categories}
+            value={categoryId}
+            onChange={setCategoryId}
+            required
+            label="Service category *"
+            parentPlaceholder="What industry do you need?"
+            childPlaceholder="What specific service do you need?"
+          />
 
           <div className="space-y-1.5">
             <Label htmlFor="description">Describe what you need *</Label>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import {
   routeLeadsToBusinesses,
+  expandMatchingCategoryIds,
 } from "@/lib/lead-router";
 import { getLeadCreditsBalance } from "@/lib/lead-credits";
 import { sendLeadNotificationEmail } from "@/lib/email/lead-notification";
@@ -87,6 +88,15 @@ export async function POST(request: NextRequest) {
       .eq("status", "approved")
       .eq("province_id", data.province_id);
 
+    const { data: categoryRows } = await supabase
+      .from("categories")
+      .select("id, parent_id");
+
+    const matchingCategoryIds = expandMatchingCategoryIds(
+      data.category_id,
+      categoryRows ?? []
+    );
+
     const candidates = (businesses ?? []).map((b) => ({
       id: b.id,
       membership_tier: b.membership_tier,
@@ -109,6 +119,7 @@ export async function POST(request: NextRequest) {
       province_id: data.province_id,
       city_id: data.city_id,
       category_id: data.category_id,
+      matching_category_ids: matchingCategoryIds,
     });
 
     const [{ data: province }, { data: city }, { data: category }] = await Promise.all([

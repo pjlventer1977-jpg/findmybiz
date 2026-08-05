@@ -52,6 +52,26 @@ export async function getCategories(): Promise<Category[]> {
   return data ?? [];
 }
 
+/** Parents with nested children for SA taxonomy pickers. */
+export async function getCategoryTree(): Promise<Category[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("categories")
+    .select("*")
+    .order("sort_order");
+
+  const rows = data ?? [];
+  const parents = rows.filter((c) => !c.parent_id);
+  const children = rows.filter((c) => c.parent_id);
+
+  return parents.map((parent) => ({
+    ...parent,
+    children: children
+      .filter((c) => c.parent_id === parent.id)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+  }));
+}
+
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
   const supabase = await createClient();
   const { data } = await supabase
@@ -60,6 +80,24 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     .eq("slug", slug)
     .single();
   return data;
+}
+
+/** Category IDs that should match a filter slug (parent expands to all children). */
+export async function getMatchingCategoryIds(slug: string): Promise<string[]> {
+  const category = await getCategoryBySlug(slug);
+  if (!category) return [];
+
+  if (category.parent_id) {
+    return [category.id];
+  }
+
+  const supabase = await createClient();
+  const { data: children } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("parent_id", category.id);
+
+  return [category.id, ...(children ?? []).map((c) => c.id)];
 }
 
 export async function searchBusinesses(params: {
@@ -75,13 +113,13 @@ export async function searchBusinesses(params: {
   let categoryBusinessIds: string[] | null = null;
 
   if (params.category) {
-    const category = await getCategoryBySlug(params.category);
-    if (!category) return [];
+    const matchingIds = await getMatchingCategoryIds(params.category);
+    if (matchingIds.length === 0) return [];
 
     const { data: categoryLinks } = await supabase
       .from("business_categories")
       .select("business_id")
-      .eq("category_id", category.id);
+      .in("category_id", matchingIds);
 
     categoryBusinessIds = categoryLinks?.map((row) => row.business_id) ?? [];
     if (categoryBusinessIds.length === 0) return [];

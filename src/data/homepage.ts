@@ -22,6 +22,16 @@ import {
   LayoutDashboard,
   Mail,
   TrendingUp,
+  Utensils,
+  ShoppingBag,
+  Building2,
+  Factory,
+  PawPrint,
+  Baby,
+  Users,
+  Shirt,
+  Zap,
+  Wrench,
 } from "lucide-react";
 
 export const HERO_BACKGROUND_IMAGE = "/hero-proudly-south-african.png";
@@ -31,8 +41,8 @@ export const PROVINCES_SECTION_BACKGROUND = "/provinces-cape-town-sa.png";
 export const POPULAR_SEARCHES = [
   { label: "Plumbers", query: "plumber" },
   { label: "Electricians", query: "electrician" },
-  { label: "Painters", query: "painter" },
-  { label: "Carpenters", query: "carpenter" },
+  { label: "Solar & Inverters", query: "solar" },
+  { label: "Armed Response", query: "armed response" },
   { label: "More", query: "" },
 ] as const;
 
@@ -52,32 +62,28 @@ export const CATEGORY_ICONS: LucideIcon[] = [
 ];
 
 const CATEGORY_ICON_BY_SLUG: Record<string, LucideIcon> = {
-  automotive: Car,
-  "automotive-parts": Car,
+  "automotive-vehicles": Car,
   "building-construction": Hammer,
-  "business-services": BriefcaseBusiness,
-  "cleaning-services": Sparkles,
-  "education-training": GraduationCap,
-  "electrical-services": Hammer,
-  "events-entertainment": Calendar,
-  "financial-services": BriefcaseBusiness,
-  "food-beverage": Home,
+  "electrical-plumbing-energy": Zap,
+  "home-services-maintenance": Wrench,
+  "security-safety": ShieldCheck,
   "health-medical": HeartPulse,
-  "home-garden": Home,
-  "hospitality-tourism": MapPin,
-  "it-technology": Monitor,
-  "legal-services": Gavel,
-  "manufacturing": Hammer,
-  "marketing-advertising": BriefcaseBusiness,
-  "plumbing-services": Hammer,
-  "real-estate": Home,
-  "retail-shopping": BriefcaseBusiness,
-  "security-services": ShieldCheck,
+  "beauty-wellness-fitness": Scissors,
+  "food-drink-hospitality": Utensils,
+  "retail-shopping": ShoppingBag,
+  "property-real-estate": Building2,
+  "finance-insurance-legal": Gavel,
+  "business-professional-services": BriefcaseBusiness,
+  "it-telecoms-digital": Monitor,
+  "education-training": GraduationCap,
+  "events-media-creative": Calendar,
   "transport-logistics": Truck,
-  "beauty-wellness": Scissors,
   "agriculture-farming": Leaf,
-  "photography-video": Star,
-  consulting: BriefcaseBusiness,
+  "manufacturing-mining-industrial": Factory,
+  "pets-animal-care": PawPrint,
+  "childcare-family": Baby,
+  "community-ngo": Users,
+  "clothing-tailoring-textiles": Shirt,
 };
 
 export function getCategoryIcon(slug: string, fallbackIndex: number): LucideIcon {

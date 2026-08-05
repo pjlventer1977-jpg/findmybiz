@@ -17,6 +17,45 @@ export interface QuoteRequestInput {
   province_id: string;
   city_id: string;
   category_id: string;
+  /**
+   * Category IDs that satisfy this quote (parent expands to children;
+   * child also includes parent). When omitted, exact category_id match only.
+   */
+  matching_category_ids?: string[];
+}
+
+export type CategoryMatchRow = {
+  id: string;
+  parent_id: string | null;
+};
+
+/**
+ * Expand a requested category so parent↔child listings both qualify for leads.
+ * - Parent request → parent + all children
+ * - Child request → child + its parent
+ */
+export function expandMatchingCategoryIds(
+  categoryId: string,
+  categories: CategoryMatchRow[]
+): string[] {
+  const category = categories.find((c) => c.id === categoryId);
+  if (!category) return [categoryId];
+
+  if (category.parent_id) {
+    return [category.id, category.parent_id];
+  }
+
+  const childIds = categories
+    .filter((c) => c.parent_id === category.id)
+    .map((c) => c.id);
+  return [category.id, ...childIds];
+}
+
+function categoryOverlap(
+  businessCategoryIds: string[],
+  matchingIds: string[]
+): boolean {
+  return businessCategoryIds.some((id) => matchingIds.includes(id));
 }
 
 export function routeLeadsToBusinesses(
@@ -24,9 +63,14 @@ export function routeLeadsToBusinesses(
   request: QuoteRequestInput,
   maxLeads: number = 5
 ): LeadRoutingCandidate[] {
+  const matchingIds =
+    request.matching_category_ids && request.matching_category_ids.length > 0
+      ? request.matching_category_ids
+      : [request.category_id];
+
   const eligible = candidates.filter((c) => {
     if (c.lead_credits_balance <= 0) return false;
-    if (!c.category_ids.includes(request.category_id)) return false;
+    if (!categoryOverlap(c.category_ids, matchingIds)) return false;
     if (c.province_id !== request.province_id) return false;
     return true;
   });
