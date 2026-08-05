@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminPromoExpireButton } from "@/components/admin/admin-promo-expire-button";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -66,6 +67,8 @@ export default async function AdminPage() {
         <Button asChild variant="outline"><Link href="/admin/reviews">Review Moderation</Link></Button>
         <Button asChild variant="outline"><Link href="/admin/reports">Reports</Link></Button>
       </div>
+
+      <AdminPromoExpireButton />
     </div>
   );
 }
