@@ -1,3 +1,4 @@
+import { isLaunchPromoActive } from "@/constants/launch-promo";
 import { BusinessRegistrationForm } from "./registration-form";
 
 export const metadata = {
@@ -14,7 +15,7 @@ export default async function RegisterPage() {
           Join Find My Biz and start receiving qualified leads from customers across South Africa.
         </p>
       </div>
-      <BusinessRegistrationForm />
+      <BusinessRegistrationForm launchPromoEnabled={isLaunchPromoActive()} />
     </div>
   );
 }

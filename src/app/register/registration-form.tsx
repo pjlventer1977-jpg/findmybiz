@@ -8,10 +8,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import {
+  getPromoPrice,
+  LAUNCH_PROMO_LABEL,
+  LAUNCH_PROMO_MONTHS,
+} from "@/constants/launch-promo";
 import { MEMBERSHIP_PLANS } from "@/constants/membership";
+import { formatCurrency } from "@/lib/utils";
 import { registerBusinessAccount } from "./actions";
 
-export function BusinessRegistrationForm() {
+type BusinessRegistrationFormProps = {
+  launchPromoEnabled?: boolean;
+};
+
+export function BusinessRegistrationForm({
+  launchPromoEnabled = false,
+}: BusinessRegistrationFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,8 +120,17 @@ export function BusinessRegistrationForm() {
             <p className="text-xs text-slate-500">
               Payment is only required after your business is approved.
             </p>
+            {launchPromoEnabled && (
+              <p className="rounded-lg border border-sa-gold/40 bg-sa-gold/10 px-3 py-2 text-xs font-medium text-sa-blue">
+                {LAUNCH_PROMO_LABEL}. Then full price from month {LAUNCH_PROMO_MONTHS + 1}.
+              </p>
+            )}
             <div className="grid gap-2 sm:grid-cols-2">
-              {MEMBERSHIP_PLANS.map((plan) => (
+              {MEMBERSHIP_PLANS.map((plan) => {
+                const showPromo = launchPromoEnabled && plan.price > 0;
+                const promoPrice = getPromoPrice(plan.price);
+
+                return (
                 <label
                   key={plan.tier}
                   className={`cursor-pointer rounded-xl border p-3 transition-colors ${
@@ -126,17 +147,32 @@ export function BusinessRegistrationForm() {
                     onChange={() => setSelectedTier(plan.tier)}
                     className="sr-only"
                   />
-                  <span className="flex items-center justify-between gap-2">
+                  <span className="flex items-start justify-between gap-2">
                     <span className="font-semibold text-sa-blue">{plan.name}</span>
-                    <span className="text-sm font-bold text-slate-900">
-                      {plan.price === 0 ? "Free" : `R${plan.price}/mo`}
-                    </span>
+                    {showPromo ? (
+                      <span className="text-right">
+                        <span className="block text-sm font-bold text-sa-green">
+                          {formatCurrency(promoPrice)}/mo
+                        </span>
+                        <span className="block text-xs text-slate-500 line-through">
+                          {formatCurrency(plan.price)}/mo
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-sm font-bold text-slate-900">
+                        {plan.price === 0 ? "Free" : `${formatCurrency(plan.price)}/mo`}
+                      </span>
+                    )}
                   </span>
                   <span className="mt-1 block text-xs text-slate-600">
                     {plan.leadsPerMonth} lead{plan.leadsPerMonth === 1 ? "" : "s"} per month
+                    {showPromo && (
+                      <span className="text-sa-gold"> · 50% off for {LAUNCH_PROMO_MONTHS} months</span>
+                    )}
                   </span>
                 </label>
-              ))}
+              );
+              })}
             </div>
           </fieldset>
 
