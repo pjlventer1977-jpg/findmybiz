@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import {
   amountsMatch,
+  buildPayFastFormData,
   buildPayFastValidateParamString,
   generatePayFastSignature,
   merchantIdMatches,
@@ -124,5 +125,72 @@ describe("buildPayFastValidateParamString", () => {
     ]);
     expect(param).toBe("m_payment_id=abc&amount_gross=10.00");
     expect(param.includes("signature")).toBe(false);
+  });
+});
+
+describe("buildPayFastFormData subscription signatures", () => {
+  const prevEnv = {
+    merchantId: process.env.PAYFAST_MERCHANT_ID,
+    merchantKey: process.env.PAYFAST_MERCHANT_KEY,
+    passphrase: process.env.PAYFAST_PASSPHRASE,
+    appUrl: process.env.NEXT_PUBLIC_APP_URL,
+    sandbox: process.env.PAYFAST_SANDBOX,
+  };
+
+  beforeEach(() => {
+    process.env.PAYFAST_MERCHANT_ID = "10000100";
+    process.env.PAYFAST_MERCHANT_KEY = "46f0cd694581a";
+    process.env.PAYFAST_PASSPHRASE = "jt7NOE43FZPn";
+    process.env.NEXT_PUBLIC_APP_URL = "https://findmybiz.co.za";
+    process.env.PAYFAST_SANDBOX = "true";
+  });
+
+  afterEach(() => {
+    for (const [key, value] of Object.entries(prevEnv)) {
+      const envKey =
+        key === "merchantId"
+          ? "PAYFAST_MERCHANT_ID"
+          : key === "merchantKey"
+            ? "PAYFAST_MERCHANT_KEY"
+            : key === "passphrase"
+              ? "PAYFAST_PASSPHRASE"
+              : key === "appUrl"
+                ? "NEXT_PUBLIC_APP_URL"
+                : "PAYFAST_SANDBOX";
+      if (value === undefined) delete process.env[envKey];
+      else process.env[envKey] = value;
+    }
+  });
+
+  it("UTF-8 encodes em dashes in promo item_description for PayFast", () => {
+    const promoDescription =
+      "Launch special — 50% off for 3 months. Then 149.50/mo.";
+    const { fields } = buildPayFastFormData({
+      return_url: "https://findmybiz.co.za/dashboard/billing?success=true",
+      cancel_url: "https://findmybiz.co.za/dashboard/billing?cancelled=true",
+      notify_url: "https://findmybiz.co.za/api/webhooks/payfast",
+      email_address: "owner@example.com",
+      m_payment_id: "payment-123",
+      amount: 74.5,
+      item_name: "Find My Biz Starter Membership",
+      item_description: promoDescription,
+      subscription_type: "1",
+      billing_date: "2026-08-05",
+      recurring_amount: "74.50",
+      frequency: "3",
+      cycles: "0",
+    });
+
+    expect(fields.item_description).toBe(promoDescription);
+    expect(fields.signature).toMatch(/^[a-f0-9]{32}$/);
+
+    // PHP urlencode uses UTF-8 bytes for em dash (%E2%80%94), not %2014.
+    expect(
+      generatePayFastSignature(
+        { item_description: "Launch special — 50% off" },
+        process.env.PAYFAST_PASSPHRASE,
+        ["item_description"]
+      )
+    ).toBe("69b16d08fdd046bef37861aa518c5a5d");
   });
 });

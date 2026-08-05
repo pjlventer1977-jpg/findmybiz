@@ -78,6 +78,7 @@ export interface PayFastItnVerifyResult {
 
 /**
  * Match PHP urlencode() — PayFast requires + for spaces and uppercase hex.
+ * Non-ASCII characters must be encoded as UTF-8 bytes (not Unicode code points).
  * Checkout signatures trim values; ITN verification must not trim.
  */
 function encodeValue(value: string, { trim = true }: { trim?: boolean } = {}): string {
@@ -90,7 +91,9 @@ function encodeValue(value: string, { trim = true }: { trim?: boolean } = {}): s
     } else if (char === " ") {
       encoded += "+";
     } else {
-      encoded += `%${char.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0")}`;
+      for (const byte of new TextEncoder().encode(char)) {
+        encoded += `%${byte.toString(16).toUpperCase().padStart(2, "0")}`;
+      }
     }
   }
 
