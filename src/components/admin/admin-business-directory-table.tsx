@@ -3,6 +3,7 @@ import type { AdminDirectoryBusiness } from "@/lib/queries/admin-businesses";
 import { formatCurrency } from "@/lib/utils";
 import { getPlanByTier } from "@/constants/membership";
 import type { MembershipTier } from "@/types";
+import { AdminBusinessActions } from "@/app/admin/businesses/admin-actions";
 
 function statusClass(status: string) {
   switch (status) {
@@ -45,6 +46,7 @@ export function AdminBusinessDirectoryTable({
             <th className="px-3 py-3 font-medium text-right">Views</th>
             <th className="px-3 py-3 font-medium text-right">Leads</th>
             <th className="px-3 py-3 font-medium">Registered</th>
+            <th className="px-3 py-3 font-medium">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -64,7 +66,7 @@ export function AdminBusinessDirectoryTable({
                   {categories && (
                     <p className="text-xs text-muted-foreground">{categories}</p>
                   )}
-                  {business.slug && (
+                  {business.slug && business.status === "approved" && (
                     <Link
                       href={`/business/${business.slug}`}
                       className="text-xs text-primary hover:underline"
@@ -123,6 +125,17 @@ export function AdminBusinessDirectoryTable({
                       {new Date(business.approved_at).toLocaleDateString("en-ZA")}
                     </p>
                   )}
+                </td>
+                <td className="min-w-[11rem] px-3 py-3">
+                  <AdminBusinessActions
+                    businessId={business.id}
+                    businessName={business.name}
+                    status={business.status}
+                    canApprove
+                    canVerifiedApprove={false}
+                    canResendApprovalEmail={business.status === "approved"}
+                    compact
+                  />
                 </td>
               </tr>
             );

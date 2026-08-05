@@ -175,10 +175,11 @@ export function AdminBusinessCard({ business }: AdminBusinessCardProps) {
 
         <AdminBusinessActions
           businessId={business.id}
+          businessName={business.name}
+          status={business.status ?? "pending"}
           canApprove={approvalAllowed}
           canVerifiedApprove={verifiedApprovalAllowed}
           canResendApprovalEmail={business.status === "approved"}
-          isPending={business.status !== "approved"}
         />
       </div>
     </div>

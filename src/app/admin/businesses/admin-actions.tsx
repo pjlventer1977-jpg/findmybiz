@@ -4,29 +4,44 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
+type StatusAction =
+  | "approved"
+  | "verified_approved"
+  | "rejected"
+  | "suspended"
+  | "unsuspended";
+
 interface AdminBusinessActionsProps {
   businessId: string;
-  canApprove: boolean;
-  canVerifiedApprove: boolean;
-  canResendApprovalEmail: boolean;
-  isPending: boolean;
+  businessName: string;
+  status: string;
+  canApprove?: boolean;
+  canVerifiedApprove?: boolean;
+  canResendApprovalEmail?: boolean;
+  /** Compact layout for directory table rows */
+  compact?: boolean;
 }
 
 export function AdminBusinessActions({
   businessId,
-  canApprove,
-  canVerifiedApprove,
-  canResendApprovalEmail,
-  isPending,
+  businessName,
+  status,
+  canApprove = false,
+  canVerifiedApprove = false,
+  canResendApprovalEmail = false,
+  compact = false,
 }: AdminBusinessActionsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  async function handleAction(
-    action: "approved" | "verified_approved" | "rejected" | "suspended"
-  ) {
+  const isPending = status === "pending";
+  const isApproved = status === "approved";
+  const isSuspended = status === "suspended";
+  const isRejected = status === "rejected";
+
+  async function handleAction(action: StatusAction) {
     setLoading(action);
     setError(null);
     setNotice(null);
@@ -51,11 +66,13 @@ export function AdminBusinessActions({
       }
 
       if (data.email_notification) {
-        const { status, recipient, error: emailError } = data.email_notification;
-        if (status === "failed") {
-          setError(`Business approved, but the approval email failed: ${emailError ?? "Unknown error"}`);
-        } else {
-          setNotice(`Approval email sent to ${recipient}.`);
+        const { status: emailStatus, recipient, error: emailError } = data.email_notification;
+        if (emailStatus === "failed") {
+          setError(
+            `Action saved, but email failed: ${emailError ?? "Unknown error"}`
+          );
+        } else if (recipient) {
+          setNotice(`Email sent to ${recipient}.`);
         }
       }
       router.refresh();
@@ -90,9 +107,55 @@ export function AdminBusinessActions({
     }
   }
 
+  async function handleDelete() {
+    const typed = window.prompt(
+      `Permanently delete "${businessName}" and the owner login?\n\nType the business name to confirm:`
+    );
+    if (typed == null) return;
+    if (typed.trim().toLowerCase() !== businessName.trim().toLowerCase()) {
+      setError("Deletion cancelled — name did not match.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `This cannot be undone.\n\nDelete business "${businessName}" and remove the owner account?`
+    );
+    if (!confirmed) return;
+
+    setLoading("deleted");
+    setError(null);
+    setNotice(null);
+
+    try {
+      const res = await fetch(`/api/admin/businesses/${businessId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm_name: typed.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? "Delete failed");
+      }
+      if (data.warning) {
+        setNotice(data.warning);
+      } else {
+        setNotice(
+          data.user_deleted
+            ? "Business and owner account deleted."
+            : "Business deleted (owner kept — other listings remain)."
+        );
+      }
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(null);
+    }
+  }
+
   return (
-    <div className="flex flex-col items-end gap-2">
-      <div className="flex flex-wrap justify-end gap-2">
+    <div className={`flex flex-col gap-2 ${compact ? "items-stretch" : "items-end"}`}>
+      <div className={`flex flex-wrap gap-2 ${compact ? "" : "justify-end"}`}>
         {isPending && (
           <>
             <Button
@@ -118,17 +181,48 @@ export function AdminBusinessActions({
             >
               {loading === "rejected" ? "Rejecting..." : "Reject"}
             </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              disabled={!!loading}
-              onClick={() => handleAction("suspended")}
-            >
-              {loading === "suspended" ? "Suspending..." : "Suspend"}
-            </Button>
           </>
         )}
-        {canResendApprovalEmail && (
+
+        {(isRejected || isSuspended) && (
+          <Button
+            size="sm"
+            disabled={!!loading || (isRejected && !canApprove)}
+            onClick={() => handleAction(isSuspended ? "unsuspended" : "approved")}
+            title={
+              isRejected && !canApprove
+                ? "Profile must be complete to restore"
+                : undefined
+            }
+          >
+            {loading === "unsuspended" || loading === "approved"
+              ? "Restoring..."
+              : isSuspended
+                ? "Unsuspend"
+                : "Restore / Approve"}
+          </Button>
+        )}
+
+        {(isPending || isApproved || isRejected) && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!!loading}
+            onClick={() => {
+              if (
+                window.confirm(
+                  `Suspend "${businessName}"?\n\nListing will be hidden and any paid plan cancelled.`
+                )
+              ) {
+                void handleAction("suspended");
+              }
+            }}
+          >
+            {loading === "suspended" ? "Suspending..." : "Suspend"}
+          </Button>
+        )}
+
+        {canResendApprovalEmail && isApproved && (
           <Button
             size="sm"
             variant="outline"
@@ -138,6 +232,15 @@ export function AdminBusinessActions({
             {loading === "resend_email" ? "Sending..." : "Resend Approval Email"}
           </Button>
         )}
+
+        <Button
+          size="sm"
+          variant="destructive"
+          disabled={!!loading}
+          onClick={handleDelete}
+        >
+          {loading === "deleted" ? "Deleting..." : "Delete"}
+        </Button>
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
       {notice && <p className="text-xs text-sa-green">{notice}</p>}

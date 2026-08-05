@@ -274,6 +274,66 @@ export async function sendBusinessApprovedEmail(
   });
 }
 
+export async function sendBusinessSuspendedEmail(payload: {
+  businessName: string;
+  businessEmail: string;
+  contactPerson?: string | null;
+}): Promise<{ success: boolean; error?: string }> {
+  return sendBusinessEmail({
+    to: payload.businessEmail,
+    subject: "Your Find My Biz listing has been suspended",
+    text: [
+      `Hi ${payload.contactPerson || payload.businessName},`,
+      "",
+      `Your listing for ${payload.businessName} has been suspended by Find My Biz admin.`,
+      "It is no longer visible in public search. Any paid subscription has been cancelled.",
+      "",
+      "Contact support if you believe this was done in error:",
+      "support@findmybiz.co.za",
+    ].join("\n"),
+    html: `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #B45309; color: white; padding: 20px; border-radius: 8px 8px 0 0;"><h1 style="margin: 0; font-size: 22px;">Listing Suspended</h1></div>
+  <div style="border: 1px solid #e5e5e5; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+    <p>Hi ${escapeHtml(payload.contactPerson || payload.businessName)},</p>
+    <p>Your listing for <strong>${escapeHtml(payload.businessName)}</strong> has been suspended by Find My Biz admin.</p>
+    <p>It is no longer visible in public search. Any paid subscription has been cancelled.</p>
+    <p>Contact <a href="mailto:support@findmybiz.co.za">support@findmybiz.co.za</a> if you believe this was done in error.</p>
+  </div>
+</body></html>`,
+  });
+}
+
+export async function sendBusinessDeletedEmail(payload: {
+  businessName: string;
+  businessEmail: string;
+  contactPerson?: string | null;
+}): Promise<{ success: boolean; error?: string }> {
+  return sendBusinessEmail({
+    to: payload.businessEmail,
+    subject: "Your Find My Biz account has been removed",
+    text: [
+      `Hi ${payload.contactPerson || payload.businessName},`,
+      "",
+      `The business listing ${payload.businessName} and its owner account have been permanently removed from Find My Biz.`,
+      "If you did not expect this, please contact support.",
+    ].join("\n"),
+    html: `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #991B1B; color: white; padding: 20px; border-radius: 8px 8px 0 0;"><h1 style="margin: 0; font-size: 22px;">Account Removed</h1></div>
+  <div style="border: 1px solid #e5e5e5; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+    <p>Hi ${escapeHtml(payload.contactPerson || payload.businessName)},</p>
+    <p>The business listing <strong>${escapeHtml(payload.businessName)}</strong> and its owner account have been permanently removed from Find My Biz.</p>
+    <p>If you did not expect this, please contact support.</p>
+  </div>
+</body></html>`,
+  });
+}
+
 export async function sendSubscriptionPaymentAdminEmail(payload: {
   businessId: string;
   businessName: string;
