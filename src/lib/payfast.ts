@@ -323,7 +323,14 @@ function buildApiSignature(params: Record<string, string>): string {
   return crypto.createHash("md5").update(parts.join("&")).digest("hex");
 }
 
-export function createPayFastApiHeaders(): Record<string, string> {
+/**
+ * PayFast API auth headers. Include any non-empty body/query fields in
+ * `extraParams` so they are part of the alphabetical signature (required for
+ * PATCH update amount, etc.). Do not include `testing`.
+ */
+export function createPayFastApiHeaders(
+  extraParams: Record<string, string> = {}
+): Record<string, string> {
   const merchantId = getPayFastMerchantId()!;
   // PayFast expects ISO-8601 without milliseconds
   const timestamp = new Date().toISOString().split(".")[0];
@@ -332,6 +339,7 @@ export function createPayFastApiHeaders(): Record<string, string> {
     "merchant-id": merchantId,
     timestamp,
     version,
+    ...extraParams,
   });
 
   return {
@@ -400,19 +408,23 @@ export async function updatePayFastSubscriptionAmount(
   const amountCents = Math.round(amountZar * 100);
   const testing = process.env.PAYFAST_SANDBOX === "true" ? "?testing=true" : "";
   const url = `https://api.payfast.co.za/subscriptions/${encodeURIComponent(token)}/update${testing}`;
+  const amountParam = String(amountCents);
 
   try {
     const response = await fetchImpl(url, {
       method: "PATCH",
-      headers: createPayFastApiHeaders(),
+      headers: createPayFastApiHeaders({ amount: amountParam }),
       body: JSON.stringify({ amount: amountCents }),
     });
     if (!response.ok) {
       const body = await response.text();
       console.error("PayFast subscription update failed:", response.status, body);
+      const detail = body.trim().slice(0, 300);
       return {
         success: false,
-        error: `PayFast update failed (${response.status})`,
+        error: detail
+          ? `PayFast update failed (${response.status}): ${detail}`
+          : `PayFast update failed (${response.status})`,
       };
     }
     return { success: true };

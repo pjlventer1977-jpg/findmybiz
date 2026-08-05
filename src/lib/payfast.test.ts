@@ -128,6 +128,33 @@ describe("buildPayFastValidateParamString", () => {
   });
 });
 
+describe("createPayFastApiHeaders", () => {
+  const prev = {
+    merchantId: process.env.PAYFAST_MERCHANT_ID,
+    passphrase: process.env.PAYFAST_PASSPHRASE,
+  };
+
+  beforeEach(() => {
+    process.env.PAYFAST_MERCHANT_ID = "10000100";
+    process.env.PAYFAST_PASSPHRASE = "jt7NOE43FZPn";
+  });
+
+  afterEach(() => {
+    if (prev.merchantId === undefined) delete process.env.PAYFAST_MERCHANT_ID;
+    else process.env.PAYFAST_MERCHANT_ID = prev.merchantId;
+    if (prev.passphrase === undefined) delete process.env.PAYFAST_PASSPHRASE;
+    else process.env.PAYFAST_PASSPHRASE = prev.passphrase;
+  });
+
+  it("includes body amount in the API signature for subscription updates", async () => {
+    const { createPayFastApiHeaders } = await import("./payfast");
+    const withAmount = createPayFastApiHeaders({ amount: "14900" });
+    const withoutAmount = createPayFastApiHeaders();
+    expect(withAmount.signature).toMatch(/^[a-f0-9]{32}$/);
+    expect(withAmount.signature).not.toBe(withoutAmount.signature);
+  });
+});
+
 describe("buildPayFastFormData subscription signatures", () => {
   const prevEnv = {
     merchantId: process.env.PAYFAST_MERCHANT_ID,
