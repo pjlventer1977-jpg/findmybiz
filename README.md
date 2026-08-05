@@ -6,6 +6,12 @@ A nationwide business directory and lead generation platform for South African b
 
 Domain: [findmybiz.co.za](https://findmybiz.co.za)
 
+## Business flows
+
+End-to-end walkthrough of registration, approval, PayFast, emails, and Get 5 Quotes:
+
+→ [`docs/BUSINESS_FLOWS.md`](docs/BUSINESS_FLOWS.md)
+
 ## Features
 
 - **QuoteMatch Lead Engine** — Customers request quotes; platform routes to up to 5 verified businesses
