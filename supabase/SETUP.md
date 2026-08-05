@@ -69,6 +69,8 @@ Expected: 9 provinces, 150+ cities, 80+ suburbs, **218 categories** (22 parent i
 
 > **Existing projects:** also run `supabase/migrations/014_sa_category_taxonomy.sql` in the SQL Editor. This replaces the old category tree (clears `business_categories` links and early-stage `quote_requests`). Regenerate seed SQL from `src/data/sa-category-taxonomy.ts` if you edit the taxonomy.
 
+> **Multi service areas:** run `supabase/migrations/015_business_service_areas.sql` so businesses can serve multiple cities/towns (`business_service_areas`). Existing HQ cities are backfilled automatically.
+
 ---
 
 ## Option B: Supabase CLI (Recommended for developers)

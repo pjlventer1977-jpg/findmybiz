@@ -7,6 +7,10 @@ export interface LeadRoutingCandidate {
   city_id: string;
   province_id: string;
   category_ids: string[];
+  /** Cities where the business provides services (includes HQ when backfilled). */
+  service_city_ids: string[];
+  /** Provinces covered by HQ or any service area. */
+  service_province_ids: string[];
   lead_credits_balance: number;
   is_local_champion: boolean;
   lead_response_rate: number;
@@ -58,6 +62,19 @@ function categoryOverlap(
   return businessCategoryIds.some((id) => matchingIds.includes(id));
 }
 
+function servesProvince(
+  candidate: LeadRoutingCandidate,
+  provinceId: string
+): boolean {
+  if (candidate.province_id === provinceId) return true;
+  return candidate.service_province_ids.includes(provinceId);
+}
+
+function servesCity(candidate: LeadRoutingCandidate, cityId: string): boolean {
+  if (candidate.city_id === cityId) return true;
+  return candidate.service_city_ids.includes(cityId);
+}
+
 export function routeLeadsToBusinesses(
   candidates: LeadRoutingCandidate[],
   request: QuoteRequestInput,
@@ -71,7 +88,7 @@ export function routeLeadsToBusinesses(
   const eligible = candidates.filter((c) => {
     if (c.lead_credits_balance <= 0) return false;
     if (!categoryOverlap(c.category_ids, matchingIds)) return false;
-    if (c.province_id !== request.province_id) return false;
+    if (!servesProvince(c, request.province_id)) return false;
     return true;
   });
 
@@ -80,8 +97,8 @@ export function routeLeadsToBusinesses(
       TIER_PRIORITY[b.membership_tier] - TIER_PRIORITY[a.membership_tier];
     if (tierDiff !== 0) return tierDiff;
 
-    const cityMatchA = a.city_id === request.city_id ? 1 : 0;
-    const cityMatchB = b.city_id === request.city_id ? 1 : 0;
+    const cityMatchA = servesCity(a, request.city_id) ? 1 : 0;
+    const cityMatchB = servesCity(b, request.city_id) ? 1 : 0;
     if (cityMatchB !== cityMatchA) return cityMatchB - cityMatchA;
 
     if (b.is_local_champion !== a.is_local_champion) {

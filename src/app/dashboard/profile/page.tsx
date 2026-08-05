@@ -5,6 +5,7 @@ import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
 import { getCategoryTree, getProvinces } from "@/lib/queries/public";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getProfileCompleteness } from "@/lib/business/profile-readiness";
+import type { ServiceAreaSelection } from "@/components/business/service-areas-select";
 
 export default async function DashboardProfilePage() {
   const supabase = await createClient();
@@ -16,7 +17,13 @@ export default async function DashboardProfilePage() {
 
   if (!business) return <p>Register a business first.</p>;
 
-  const [documentsResult, provinces, categories, businessCategoryResult] = await Promise.all([
+  const [
+    documentsResult,
+    provinces,
+    categories,
+    businessCategoriesResult,
+    serviceAreasResult,
+  ] = await Promise.all([
     supabase
       .from("business_documents")
       .select("*")
@@ -27,12 +34,49 @@ export default async function DashboardProfilePage() {
     supabase
       .from("business_categories")
       .select("category_id")
-      .eq("business_id", business.id)
-      .limit(1)
-      .maybeSingle(),
+      .eq("business_id", business.id),
+    supabase
+      .from("business_service_areas")
+      .select("city_id, city:cities(id, name, province_id, province:provinces(id, name))")
+      .eq("business_id", business.id),
   ]);
+
   const documents = documentsResult.data ?? [];
-  const primaryCategoryId = businessCategoryResult.data?.category_id ?? null;
+  const categoryIds = (businessCategoriesResult.data ?? []).map((row) => row.category_id);
+  const primaryCategoryId = categoryIds[0] ?? null;
+
+  const serviceAreas: ServiceAreaSelection[] = (serviceAreasResult.data ?? [])
+    .map((row) => {
+      const city = Array.isArray(row.city) ? row.city[0] : row.city;
+      if (!city) return null;
+      const province = Array.isArray(city.province) ? city.province[0] : city.province;
+      return {
+        cityId: city.id,
+        provinceId: city.province_id,
+        cityName: city.name,
+        provinceName: province?.name ?? "",
+      } satisfies ServiceAreaSelection;
+    })
+    .filter((area): area is ServiceAreaSelection => area !== null);
+
+  // Fallback for businesses that still only have HQ city set
+  if (serviceAreas.length === 0 && business.city_id && business.province_id) {
+    const province = provinces.find((p) => p.id === business.province_id);
+    const { data: city } = await supabase
+      .from("cities")
+      .select("id, name")
+      .eq("id", business.city_id)
+      .maybeSingle();
+    if (city) {
+      serviceAreas.push({
+        cityId: city.id,
+        provinceId: business.province_id,
+        cityName: city.name,
+        provinceName: province?.name ?? "",
+      });
+    }
+  }
+
   const readiness = getProfileCompleteness(business, primaryCategoryId);
   const hasDocument = (type: "proof_of_address" | "id_document") =>
     documents.some((document) => document.document_type === type);
@@ -67,10 +111,18 @@ export default async function DashboardProfilePage() {
                 return (
                   <li
                     key={item}
-                    className={complete ? "flex items-center gap-2 text-sa-green" : "flex items-center gap-2 text-muted-foreground"}
+                    className={
+                      complete
+                        ? "flex items-center gap-2 text-sa-green"
+                        : "flex items-center gap-2 text-muted-foreground"
+                    }
                   >
                     <Icon className="h-4 w-4" aria-hidden />
-                    {item}
+                    {item === "Primary category"
+                      ? "Service categories"
+                      : item === "City / town"
+                        ? "Service areas"
+                        : item}
                   </li>
                 );
               })}
@@ -87,7 +139,11 @@ export default async function DashboardProfilePage() {
                 return (
                   <li
                     key={label}
-                    className={complete ? "flex items-center gap-2 text-sa-green" : "flex items-center gap-2 text-muted-foreground"}
+                    className={
+                      complete
+                        ? "flex items-center gap-2 text-sa-green"
+                        : "flex items-center gap-2 text-muted-foreground"
+                    }
                   >
                     <Icon className="h-4 w-4" aria-hidden />
                     {label}
@@ -103,7 +159,8 @@ export default async function DashboardProfilePage() {
         documents={documents}
         provinces={provinces}
         categories={categories}
-        primaryCategoryId={primaryCategoryId}
+        categoryIds={categoryIds}
+        serviceAreas={serviceAreas}
       />
     </div>
   );

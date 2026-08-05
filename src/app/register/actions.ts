@@ -13,6 +13,9 @@ const registrationSchema = z.object({
   email: z.string().trim().email().max(255),
   password: z.string().min(6).max(72),
   selectedTier: z.enum(["free", "starter", "professional", "enterprise"]),
+  categoryIds: z.array(z.string().uuid()).min(1).max(8),
+  serviceCityIds: z.array(z.string().uuid()).min(1).max(20),
+  primaryCityId: z.string().uuid(),
 });
 
 export async function registerBusinessAccount(input: {
@@ -22,6 +25,9 @@ export async function registerBusinessAccount(input: {
   email: string;
   password: string;
   selectedTier: MembershipTier;
+  categoryIds: string[];
+  serviceCityIds: string[];
+  primaryCityId: string;
 }) {
   const parsed = registrationSchema.safeParse(input);
   if (!parsed.success) {
@@ -31,8 +37,49 @@ export async function registerBusinessAccount(input: {
     };
   }
 
-  const { businessName, contactPerson, phone, email, password, selectedTier } = parsed.data;
+  const {
+    businessName,
+    contactPerson,
+    phone,
+    email,
+    password,
+    selectedTier,
+    categoryIds,
+    serviceCityIds,
+    primaryCityId,
+  } = parsed.data;
+
+  if (!serviceCityIds.includes(primaryCityId)) {
+    return { ok: false, error: "Primary city must be one of your service areas." };
+  }
+
   const supabase = await createClient();
+  const serviceClient = await createServiceClient();
+
+  const { data: cities, error: citiesError } = await serviceClient
+    .from("cities")
+    .select("id, province_id")
+    .in("id", serviceCityIds);
+
+  if (citiesError || !cities || cities.length !== serviceCityIds.length) {
+    return { ok: false, error: "One or more selected cities are invalid." };
+  }
+
+  const primaryCity = cities.find((c) => c.id === primaryCityId);
+  if (!primaryCity) {
+    return { ok: false, error: "Primary city is invalid." };
+  }
+
+  const { data: categories, error: categoriesError } = await serviceClient
+    .from("categories")
+    .select("id, parent_id")
+    .in("id", categoryIds);
+
+  if (categoriesError || !categories || categories.length !== categoryIds.length) {
+    return { ok: false, error: "One or more selected categories are invalid." };
+  }
+
+  // Prefer subcategory IDs (children); reject unknown empties already handled
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.findmybiz.co.za";
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
@@ -51,7 +98,6 @@ export async function registerBusinessAccount(input: {
   }
 
   const user = signUpData.user;
-  const serviceClient = await createServiceClient();
   const slug = `${slugify(businessName)}-${Date.now().toString(36)}`;
   const { data: business, error: businessError } = await serviceClient
     .from("businesses")
@@ -66,6 +112,8 @@ export async function registerBusinessAccount(input: {
       status: "pending",
       membership_tier: "free",
       intended_membership_tier: selectedTier,
+      province_id: primaryCity.province_id,
+      city_id: primaryCity.id,
     })
     .select("id")
     .single();
@@ -91,6 +139,31 @@ export async function registerBusinessAccount(input: {
     await serviceClient.from("businesses").delete().eq("id", business.id);
     await serviceClient.auth.admin.deleteUser(user.id);
     return { ok: false, error: "Could not finish setting up your business account." };
+  }
+
+  const { error: categoryInsertError } = await serviceClient
+    .from("business_categories")
+    .insert(categoryIds.map((category_id) => ({ business_id: business.id, category_id })));
+
+  if (categoryInsertError) {
+    await serviceClient.from("businesses").delete().eq("id", business.id);
+    await serviceClient.auth.admin.deleteUser(user.id);
+    return { ok: false, error: "Could not save your service categories." };
+  }
+
+  const { error: areasInsertError } = await serviceClient
+    .from("business_service_areas")
+    .insert(
+      serviceCityIds.map((city_id) => ({
+        business_id: business.id,
+        city_id,
+      }))
+    );
+
+  if (areasInsertError) {
+    await serviceClient.from("businesses").delete().eq("id", business.id);
+    await serviceClient.auth.admin.deleteUser(user.id);
+    return { ok: false, error: "Could not save your service areas." };
   }
 
   const notification = await notifyPendingBusinessRegistration(business.id, user.id);
