@@ -21,6 +21,8 @@ function candidate(
     city_id: "city-1",
     province_id: "prov-1",
     category_ids: [],
+    service_city_ids: ["city-1"],
+    service_province_ids: ["prov-1"],
     lead_credits_balance: 5,
     is_local_champion: false,
     lead_response_rate: 0.5,
@@ -73,5 +75,28 @@ describe("routeLeadsToBusinesses category matching", () => {
       }
     );
     expect(routed.map((b) => b.id)).toEqual(["biz-parent"]);
+  });
+
+  it("matches businesses that serve the quote city even when HQ is elsewhere", () => {
+    const matching = expandMatchingCategoryIds("child-solar", categories);
+    const routed = routeLeadsToBusinesses(
+      [
+        candidate({
+          id: "biz-multi-city",
+          city_id: "city-hq",
+          province_id: "prov-other",
+          category_ids: ["child-solar"],
+          service_city_ids: ["city-hq", "city-1"],
+          service_province_ids: ["prov-other", "prov-1"],
+        }),
+      ],
+      {
+        province_id: "prov-1",
+        city_id: "city-1",
+        category_id: "child-solar",
+        matching_category_ids: matching,
+      }
+    );
+    expect(routed.map((b) => b.id)).toEqual(["biz-multi-city"]);
   });
 });

@@ -84,6 +84,7 @@ export interface Business {
   city?: City;
   suburb?: Suburb;
   categories?: Category[];
+  service_areas?: City[];
 }
 
 export type BusinessDocumentType = "proof_of_address" | "id_document" | "cipc";

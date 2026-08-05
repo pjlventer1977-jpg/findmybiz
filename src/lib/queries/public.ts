@@ -125,6 +125,33 @@ export async function searchBusinesses(params: {
     if (categoryBusinessIds.length === 0) return [];
   }
 
+  let cityBusinessIds: string[] | null = null;
+  if (params.city) {
+    const { data: cityRow } = await supabase
+      .from("cities")
+      .select("id")
+      .eq("slug", params.city)
+      .maybeSingle();
+
+    if (!cityRow) return [];
+
+    const [{ data: areaLinks }, { data: hqBusinesses }] = await Promise.all([
+      supabase
+        .from("business_service_areas")
+        .select("business_id")
+        .eq("city_id", cityRow.id),
+      supabase.from("businesses").select("id").eq("city_id", cityRow.id).eq("status", "approved"),
+    ]);
+
+    cityBusinessIds = [
+      ...new Set([
+        ...(areaLinks ?? []).map((row) => row.business_id),
+        ...(hqBusinesses ?? []).map((row) => row.id),
+      ]),
+    ];
+    if (cityBusinessIds.length === 0) return [];
+  }
+
   let query = supabase
     .from("businesses")
     .select(`
@@ -139,13 +166,39 @@ export async function searchBusinesses(params: {
     query = query.in("id", categoryBusinessIds);
   }
 
-  if (params.province) {
-    const prov = await getProvinceBySlug(params.province);
-    if (prov) query = query.eq("province_id", prov.id);
+  if (cityBusinessIds) {
+    query = query.in("id", cityBusinessIds);
   }
 
-  if (params.city) {
-    query = query.eq("city.slug", params.city);
+  if (params.province) {
+    const prov = await getProvinceBySlug(params.province);
+    if (prov) {
+      // Include HQ in province OR any service area city in that province
+      const { data: provinceCities } = await supabase
+        .from("cities")
+        .select("id")
+        .eq("province_id", prov.id);
+      const cityIds = (provinceCities ?? []).map((c) => c.id);
+      const { data: areaLinks } = cityIds.length
+        ? await supabase
+            .from("business_service_areas")
+            .select("business_id")
+            .in("city_id", cityIds)
+        : { data: [] as { business_id: string }[] };
+
+      const provinceBusinessIds = [
+        ...new Set((areaLinks ?? []).map((row) => row.business_id)),
+      ];
+
+      if (provinceBusinessIds.length > 0) {
+        // PostgREST can't OR across HQ province and id list easily; filter via or()
+        query = query.or(
+          `province_id.eq.${prov.id},id.in.(${provinceBusinessIds.join(",")})`
+        );
+      } else {
+        query = query.eq("province_id", prov.id);
+      }
+    }
   }
 
   if (params.q) {

@@ -1,4 +1,5 @@
 import { isLaunchPromoActive } from "@/constants/launch-promo";
+import { getCategoryTree, getProvinces } from "@/lib/queries/public";
 import { BusinessRegistrationForm } from "./registration-form";
 
 export const metadata = {
@@ -7,6 +8,11 @@ export const metadata = {
 };
 
 export default async function RegisterPage() {
+  const [provinces, categories] = await Promise.all([
+    getProvinces(),
+    getCategoryTree(),
+  ]);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-8">
@@ -15,7 +21,11 @@ export default async function RegisterPage() {
           Join Find My Biz and start receiving qualified leads from customers across South Africa.
         </p>
       </div>
-      <BusinessRegistrationForm launchPromoEnabled={isLaunchPromoActive()} />
+      <BusinessRegistrationForm
+        launchPromoEnabled={isLaunchPromoActive()}
+        provinces={provinces}
+        categories={categories}
+      />
     </div>
   );
 }

@@ -83,10 +83,10 @@ export async function POST(request: NextRequest) {
         biz_trust_score,
         is_local_champion,
         business_categories(category_id),
+        business_service_areas(city_id, city:cities(id, province_id)),
         lead_credits(balance)
       `)
-      .eq("status", "approved")
-      .eq("province_id", data.province_id);
+      .eq("status", "approved");
 
     const { data: categoryRows } = await supabase
       .from("categories")
@@ -97,23 +97,50 @@ export async function POST(request: NextRequest) {
       categoryRows ?? []
     );
 
-    const candidates = (businesses ?? []).map((b) => ({
-      id: b.id,
-      membership_tier: b.membership_tier,
-      city_id: b.city_id,
-      province_id: b.province_id,
-      category_ids: b.business_categories?.map(
-        (bc: { category_id: string }) => bc.category_id
-      ) ?? [],
-      lead_credits_balance: getLeadCreditsBalance(b.lead_credits),
-      is_local_champion: b.is_local_champion,
-      lead_response_rate: b.lead_response_rate,
-      biz_trust_score: b.biz_trust_score,
-      phone: b.phone,
-      whatsapp: b.whatsapp,
-      name: b.name,
-      email: b.email,
-    }));
+    const candidates = (businesses ?? []).map((b) => {
+      const areaRows = b.business_service_areas ?? [];
+      const service_city_ids = areaRows
+        .map((row: { city_id: string }) => row.city_id)
+        .filter(Boolean);
+      const service_province_ids = [
+        ...new Set(
+          areaRows
+            .map((row: { city?: { province_id?: string } | { province_id?: string }[] | null }) => {
+              const city = Array.isArray(row.city) ? row.city[0] : row.city;
+              return city?.province_id;
+            })
+            .filter((id: string | undefined): id is string => Boolean(id))
+        ),
+      ];
+
+      // Always include HQ province/city for backward compatibility
+      if (b.city_id && !service_city_ids.includes(b.city_id)) {
+        service_city_ids.push(b.city_id);
+      }
+      if (b.province_id && !service_province_ids.includes(b.province_id)) {
+        service_province_ids.push(b.province_id);
+      }
+
+      return {
+        id: b.id,
+        membership_tier: b.membership_tier,
+        city_id: b.city_id,
+        province_id: b.province_id,
+        category_ids: b.business_categories?.map(
+          (bc: { category_id: string }) => bc.category_id
+        ) ?? [],
+        service_city_ids,
+        service_province_ids,
+        lead_credits_balance: getLeadCreditsBalance(b.lead_credits),
+        is_local_champion: b.is_local_champion,
+        lead_response_rate: b.lead_response_rate,
+        biz_trust_score: b.biz_trust_score,
+        phone: b.phone,
+        whatsapp: b.whatsapp,
+        name: b.name,
+        email: b.email,
+      };
+    });
 
     const routed = routeLeadsToBusinesses(candidates, {
       province_id: data.province_id,
