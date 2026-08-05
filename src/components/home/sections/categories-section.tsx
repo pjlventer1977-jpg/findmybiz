@@ -30,7 +30,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
               Browse Categories
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Find trusted businesses by service type across South Africa
+              Browse SA industries — from solar and armed response to spaza, fibre, and trades
             </p>
           </div>
           {hasMore && (

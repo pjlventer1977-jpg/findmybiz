@@ -1,3 +1,18 @@
+-- 014: Replace category taxonomy with SA market structure + subcategories
+-- Clears existing category links, then reseeds from the revised taxonomy.
+
+BEGIN;
+
+UPDATE search_analytics SET category_id = NULL WHERE category_id IS NOT NULL;
+UPDATE banner_ads SET category_id = NULL WHERE category_id IS NOT NULL;
+
+-- quote_requests.category_id is NOT NULL; remove early-stage quote data so categories can be replaced.
+-- leads cascade via quote_request_id ON DELETE CASCADE.
+DELETE FROM quote_requests;
+
+DELETE FROM business_categories;
+DELETE FROM categories;
+
 -- Find My Biz South Africa category taxonomy
 -- Generated from src/data/sa-category-taxonomy.ts
 -- Parents: 22 | Subcategories: 196 | Total: 218
@@ -355,3 +370,5 @@ SELECT p.id, s.name, s.slug, s.ord FROM categories p,
   ('Embroidery & Screen Printing', 'embroidery-screen-printing', 5)
 ) AS s(name, slug, ord) WHERE p.slug = 'clothing-tailoring-textiles';
 
+
+COMMIT;

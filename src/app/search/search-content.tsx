@@ -1,4 +1,4 @@
-import { searchBusinesses, getProvinces, getCategories, getCategoryBySlug } from "@/lib/queries/public";
+import { searchBusinesses, getProvinces, getCategoryTree, getCategoryBySlug } from "@/lib/queries/public";
 import { BusinessCard } from "@/components/business/business-card";
 import { SearchAppearanceTracker } from "@/components/analytics/search-appearance-tracker";
 import { logSearchAnalytics } from "@/lib/analytics/log-search";
@@ -22,7 +22,7 @@ export async function SearchPageContent({ params }: SearchPageContentProps) {
       category: params.category,
     }),
     getProvinces(),
-    getCategories(),
+    getCategoryTree(),
     params.category ? getCategoryBySlug(params.category) : Promise.resolve(null),
   ]);
 

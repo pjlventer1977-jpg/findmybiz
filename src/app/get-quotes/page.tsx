@@ -1,13 +1,13 @@
-import { getProvinces, getCategories } from "@/lib/queries/public";
+import { getProvinces, getCategoryTree } from "@/lib/queries/public";
 import { Check, Smartphone } from "lucide-react";
 import { SectionShell } from "@/components/home/section-shell";
 import { QuoteRequestForm } from "./quote-form";
 
 const QUOTE_CHECKLIST = [
-  "Plumbing & Electrical",
-  "Renovations & Building",
-  "Cleaning & Gardening",
-  "IT & Web Services",
+  "Solar, plumbers & electricians",
+  "Builders & renovations",
+  "Armed response & home services",
+  "IT, fibre & professional services",
 ] as const;
 
 export const metadata = {
@@ -18,7 +18,7 @@ export const metadata = {
 export default async function GetQuotesPage() {
   const [provinces, categories] = await Promise.all([
     getProvinces(),
-    getCategories(),
+    getCategoryTree(),
   ]);
 
   return (

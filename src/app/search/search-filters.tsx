@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CategoryTreeSelect } from "@/components/categories/category-tree-select";
 import type { Province, Category } from "@/types";
 
 interface SearchFiltersProps {
@@ -30,6 +32,7 @@ export function SearchFilters({
   currentParams,
 }: SearchFiltersProps) {
   const router = useRouter();
+  const [categorySlug, setCategorySlug] = useState(currentParams.category ?? "");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -37,11 +40,10 @@ export function SearchFilters({
     const params = new URLSearchParams();
     const q = formData.get("q") as string;
     const province = formData.get("province") as string;
-    const category = formData.get("category") as string;
 
     if (q) params.set("q", q);
     if (province && province !== "all") params.set("province", province);
-    if (category && category !== "all") params.set("category", category);
+    if (categorySlug) params.set("category", categorySlug);
 
     router.push(`/search?${params.toString()}`);
   }
@@ -77,22 +79,16 @@ export function SearchFilters({
         </Select>
       </div>
 
-      <div>
-        <Label>Category</Label>
-        <Select name="category" defaultValue={currentParams.category ?? "all"}>
-          <SelectTrigger>
-            <SelectValue placeholder="All categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All categories</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c.id} value={c.slug}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <CategoryTreeSelect
+        categories={categories}
+        value={categorySlug || undefined}
+        onChange={setCategorySlug}
+        valueMode="slug"
+        includeAll
+        label="Category"
+        parentPlaceholder="All industries"
+        childPlaceholder="All trades in this industry"
+      />
 
       <Button type="submit" className="w-full">
         Apply Filters

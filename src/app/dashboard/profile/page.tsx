@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { CheckCircle2, Circle } from "lucide-react";
 import { ProfileForm } from "./profile-form";
 import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
-import { getCategories, getProvinces } from "@/lib/queries/public";
+import { getCategoryTree, getProvinces } from "@/lib/queries/public";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getProfileCompleteness } from "@/lib/business/profile-readiness";
 
@@ -23,7 +23,7 @@ export default async function DashboardProfilePage() {
       .eq("business_id", business.id)
       .order("uploaded_at", { ascending: false }),
     getProvinces(),
-    getCategories(),
+    getCategoryTree(),
     supabase
       .from("business_categories")
       .select("category_id")

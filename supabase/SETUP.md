@@ -65,7 +65,9 @@ SELECT (SELECT COUNT(*) FROM provinces) AS provinces,
        (SELECT COUNT(*) FROM storage.buckets) AS buckets;
 ```
 
-Expected: 9 provinces, 150+ cities, 80+ suburbs, 250+ categories, 5 buckets.
+Expected: 9 provinces, 150+ cities, 80+ suburbs, **218 categories** (22 parent industries + 196 SA subcategories), 5 buckets.
+
+> **Existing projects:** also run `supabase/migrations/014_sa_category_taxonomy.sql` in the SQL Editor. This replaces the old category tree (clears `business_categories` links and early-stage `quote_requests`). Regenerate seed SQL from `src/data/sa-category-taxonomy.ts` if you edit the taxonomy.
 
 ---
 

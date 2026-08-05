@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { CategoryTreeSelect } from "@/components/categories/category-tree-select";
 import { createClient } from "@/lib/supabase/client";
 import type { BusinessDocument, Category, City, Province } from "@/types";
 
@@ -87,6 +88,12 @@ export function ProfileForm({
     setError(null);
 
     try {
+      if (!categoryId) {
+        setError("Please select an industry and subcategory for your business.");
+        setSaving(false);
+        return;
+      }
+
       const res = await fetch(`/api/businesses/${business.id}/profile`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -259,21 +266,18 @@ export function ProfileForm({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Primary Category</Label>
-              <Select value={categoryId || undefined} onValueChange={setCategoryId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <CategoryTreeSelect
+              categories={categories}
+              value={categoryId}
+              onChange={setCategoryId}
+              required
+              label="Primary category"
+              parentPlaceholder="Select industry"
+              childPlaceholder="Select your trade / service"
+            />
+            <p className="text-xs text-muted-foreground">
+              Choose the industry and the specific trade customers should find you under.
+            </p>
 
             <div className="space-y-2">
               <Label htmlFor="website">Website URL</Label>
