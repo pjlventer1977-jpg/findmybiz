@@ -10,6 +10,10 @@ export default function TermsPage() {
       <ul>
         <li>You must provide accurate business information and valid verification documents</li>
         <li>Membership fees are billed monthly via PayFast</li>
+        <li>
+          Launch special: qualifying paid plans may be billed at 50% for the first
+          3 months, then automatically at the full listed monthly price
+        </li>
         <li>Lead credits are allocated per plan and expire after 12 months for purchased packs</li>
         <li>You may cancel a paid subscription from Billing; access reverts to the Free plan</li>
         <li>We reserve the right to suspend listings that violate our policies</li>

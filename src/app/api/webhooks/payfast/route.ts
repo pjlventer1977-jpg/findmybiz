@@ -21,6 +21,7 @@ import {
   resolveCompleteItnBranch,
   SUBSCRIPTION_PERIOD_DAYS,
 } from "@/lib/payments/subscription-lifecycle";
+import { getPromoEndsAt } from "@/constants/launch-promo";
 
 async function downgradeBusinessToFree(
   supabase: Awaited<ReturnType<typeof createServiceClient>>,
@@ -33,6 +34,9 @@ async function downgradeBusinessToFree(
       status: subscriptionStatus,
       cancelled_at: new Date().toISOString(),
       tier: "free",
+      promo_active: false,
+      promo_ends_at: null,
+      promo_full_amount: null,
     })
     .eq("business_id", businessId);
 
@@ -162,6 +166,8 @@ export async function POST(request: NextRequest) {
       const periodEnd = new Date(
         now.getTime() + SUBSCRIPTION_PERIOD_DAYS * 24 * 60 * 60 * 1000
       );
+      const promoApplied = Boolean(metadata.launch_promo);
+      const fullAmount = Number(metadata.full_amount) || plan.price;
 
       await supabase.from("subscriptions").upsert(
         {
@@ -172,6 +178,10 @@ export async function POST(request: NextRequest) {
           current_period_start: now.toISOString(),
           current_period_end: periodEnd.toISOString(),
           cancelled_at: null,
+          promo_active: promoApplied,
+          promo_ends_at: promoApplied ? getPromoEndsAt(now).toISOString() : null,
+          promo_full_amount: promoApplied ? fullAmount : null,
+          promo_converted_at: null,
         },
         { onConflict: "business_id" }
       );

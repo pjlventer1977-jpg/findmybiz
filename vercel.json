@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/promo-expire",
+      "schedule": "0 4 * * *"
+    }
+  ]
+}

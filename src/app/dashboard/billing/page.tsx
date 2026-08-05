@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { BillingClient } from "./billing-client";
 import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
+import { isLaunchPromoActive } from "@/constants/launch-promo";
 
 export default async function BillingPage() {
   const supabase = await createClient();
@@ -12,7 +13,7 @@ export default async function BillingPage() {
 
   const { data: subscription } = await supabase
     .from("subscriptions")
-    .select("status")
+    .select("status, promo_active, promo_ends_at, promo_full_amount")
     .eq("business_id", business.id)
     .maybeSingle();
 
@@ -27,6 +28,14 @@ export default async function BillingPage() {
         selectedTier={business.intended_membership_tier ?? business.membership_tier}
         businessStatus={business.status}
         hasActiveSubscription={hasActiveSubscription}
+        launchPromoEnabled={isLaunchPromoActive()}
+        promoActive={Boolean(subscription?.promo_active)}
+        promoEndsAt={subscription?.promo_ends_at ?? null}
+        promoFullAmount={
+          subscription?.promo_full_amount != null
+            ? Number(subscription.promo_full_amount)
+            : null
+        }
       />
     </div>
   );

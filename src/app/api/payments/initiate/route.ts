@@ -7,6 +7,11 @@ import {
 import { randomUUID } from "crypto";
 import type { MembershipTier } from "@/types";
 import { getPlanByTier } from "@/constants/membership";
+import {
+  LAUNCH_PROMO_LABEL,
+  LAUNCH_PROMO_MONTHS,
+  resolveSubscriptionCheckoutAmount,
+} from "@/constants/launch-promo";
 import { resolveLeadCreditPack } from "@/lib/payments/credit-packs";
 
 const VALID_TIERS: MembershipTier[] = ["starter", "professional", "enterprise"];
@@ -57,6 +62,7 @@ export async function POST(request: NextRequest) {
   const serviceClient = await createServiceClient();
   let paymentAmount = 0;
   let creditCount: number | undefined;
+  let subscriptionMeta: Record<string, unknown> = {};
 
   if (type === "subscription") {
     if (!tier || !VALID_TIERS.includes(tier)) {
@@ -74,7 +80,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    paymentAmount = getPlanByTier(tier).price;
+    const fullPrice = getPlanByTier(tier).price;
+    const pricing = resolveSubscriptionCheckoutAmount(fullPrice);
+    paymentAmount = pricing.chargeAmount;
+    subscriptionMeta = {
+      launch_promo: pricing.promoApplied,
+      full_amount: pricing.fullAmount,
+      promo_amount: pricing.promoApplied ? pricing.chargeAmount : null,
+      promo_months: pricing.promoApplied ? LAUNCH_PROMO_MONTHS : null,
+    };
   } else if (type === "lead_credits") {
     const pack = resolveLeadCreditPack(credits);
     if (!pack) {
@@ -92,7 +106,7 @@ export async function POST(request: NextRequest) {
     payment_type: type,
     status: "pending",
     m_payment_id: paymentId,
-    metadata: { business_id, tier, credits: creditCount, type },
+    metadata: { business_id, tier, credits: creditCount, type, ...subscriptionMeta },
   });
 
   if (paymentError) {
@@ -103,12 +117,17 @@ export async function POST(request: NextRequest) {
   let formData;
 
   if (type === "subscription") {
+    const promoApplied = Boolean(subscriptionMeta.launch_promo);
     formData = createSubscriptionPayment({
       businessId: business_id,
       email: user.email!,
       tierName: tier,
       amount: paymentAmount,
+      recurringAmount: paymentAmount,
       paymentId,
+      itemDescription: promoApplied
+        ? `${LAUNCH_PROMO_LABEL}. Then ${Number(subscriptionMeta.full_amount).toFixed(2)}/mo.`
+        : undefined,
     });
   } else {
     formData = createCreditPackPayment({

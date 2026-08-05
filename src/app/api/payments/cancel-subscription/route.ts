@@ -67,6 +67,9 @@ export async function POST(request: NextRequest) {
       status: "cancelled",
       cancelled_at: now,
       tier: "free",
+      promo_active: false,
+      promo_ends_at: null,
+      promo_full_amount: null,
     })
     .eq("business_id", businessId);
 

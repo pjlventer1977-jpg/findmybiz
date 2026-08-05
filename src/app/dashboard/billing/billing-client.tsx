@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPlanByTier, MEMBERSHIP_PLANS, LEAD_CREDIT_PACKS } from "@/constants/membership";
+import {
+  getPromoPrice,
+  LAUNCH_PROMO_LABEL,
+  LAUNCH_PROMO_MONTHS,
+} from "@/constants/launch-promo";
 import { formatCurrency } from "@/lib/utils";
 import type { MembershipTier } from "@/types";
 
@@ -14,6 +19,10 @@ interface BillingClientProps {
   selectedTier: MembershipTier;
   businessStatus: string;
   hasActiveSubscription: boolean;
+  launchPromoEnabled?: boolean;
+  promoActive?: boolean;
+  promoEndsAt?: string | null;
+  promoFullAmount?: number | null;
 }
 
 export function BillingClient({
@@ -22,12 +31,17 @@ export function BillingClient({
   selectedTier,
   businessStatus,
   hasActiveSubscription,
+  launchPromoEnabled = false,
+  promoActive = false,
+  promoEndsAt = null,
+  promoFullAmount = null,
 }: BillingClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const selectedPlan = getPlanByTier(selectedTier);
+  const launchPromo = launchPromoEnabled;
   const hasPendingSelectedPlan =
     businessStatus === "approved" &&
     selectedTier !== "free" &&
@@ -122,6 +136,16 @@ export function BillingClient({
         </div>
       )}
 
+      {launchPromo && !hasActiveSubscription && (
+        <div className="rounded-xl border border-sa-gold/50 bg-sa-gold/10 px-5 py-4">
+          <p className="font-semibold text-sa-blue">{LAUNCH_PROMO_LABEL}</p>
+          <p className="mt-1 text-sm text-slate-700">
+            New paid plans are billed at 50% for the first {LAUNCH_PROMO_MONTHS}{" "}
+            months, then automatically switch to the full monthly price via PayFast.
+          </p>
+        </div>
+      )}
+
       {hasPendingSelectedPlan && (
         <div className="rounded-xl border border-sa-gold/50 bg-sa-gold/10 px-5 py-4">
           <p className="font-semibold text-sa-blue">
@@ -129,8 +153,18 @@ export function BillingClient({
             benefits.
           </p>
           <p className="mt-1 text-sm text-slate-700">
-            Complete payment below when you are ready. Your selected plan is R
-            {selectedPlan.price}/month.
+            {launchPromo ? (
+              <>
+                Launch special:{" "}
+                <strong>{formatCurrency(getPromoPrice(selectedPlan.price))}/mo</strong> for{" "}
+                {LAUNCH_PROMO_MONTHS} months, then {formatCurrency(selectedPlan.price)}/mo.
+              </>
+            ) : (
+              <>
+                Complete payment below when you are ready. Your selected plan is R
+                {selectedPlan.price}/month.
+              </>
+            )}
           </p>
         </div>
       )}
@@ -144,6 +178,13 @@ export function BillingClient({
                 You are on the {getPlanByTier(currentTier as MembershipTier).name} plan.
                 Cancel anytime to stop recurring PayFast billing.
               </p>
+              {promoActive && promoEndsAt && promoFullAmount != null && (
+                <p className="mt-2 text-sm text-sa-green">
+                  Launch special active until{" "}
+                  {new Date(promoEndsAt).toLocaleDateString("en-ZA")}. Then{" "}
+                  {formatCurrency(Number(promoFullAmount))}/mo.
+                </p>
+              )}
             </div>
             <Button
               variant="outline"
@@ -162,6 +203,7 @@ export function BillingClient({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {MEMBERSHIP_PLANS.filter((p) => p.tier !== "free").map((plan) => {
             const isSelectedPendingPlan = hasPendingSelectedPlan && plan.tier === selectedTier;
+            const promoPrice = getPromoPrice(plan.price);
             return (
             <Card
               key={plan.tier}
@@ -175,10 +217,25 @@ export function BillingClient({
             >
               <CardHeader>
                 <CardTitle>{plan.name}</CardTitle>
-                <p className="text-2xl font-bold">
-                  {formatCurrency(plan.price)}
-                  <span className="text-sm font-normal">/mo</span>
-                </p>
+                {launchPromo ? (
+                  <div>
+                    <p className="text-2xl font-bold text-sa-green">
+                      {formatCurrency(promoPrice)}
+                      <span className="text-sm font-normal">/mo</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground line-through">
+                      {formatCurrency(plan.price)}/mo
+                    </p>
+                    <p className="text-xs text-sa-gold mt-1">
+                      50% off for {LAUNCH_PROMO_MONTHS} months
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(plan.price)}
+                    <span className="text-sm font-normal">/mo</span>
+                  </p>
+                )}
               </CardHeader>
               <CardContent>
                 <ul className="text-sm space-y-1 mb-4">

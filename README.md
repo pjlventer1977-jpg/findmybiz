@@ -113,6 +113,8 @@ Unit tests for signature helpers, credit pack pricing, and renewal branching:
 npm test
 ```
 
+**Launch promo:** With `LAUNCH_PROMO_ENABLED=true` (default), new paid subscriptions bill at 50% for 3 months. Vercel Cron hits `/api/cron/promo-expire` daily (set `CRON_SECRET` in Vercel). Run migration `013_subscription_launch_promo.sql` on Supabase before relying on promo fields.
+
 ## Deployment
 
 1. Push to GitHub

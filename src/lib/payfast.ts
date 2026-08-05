@@ -374,15 +374,64 @@ export async function cancelPayFastSubscription(
   }
 }
 
+/**
+ * Update recurring subscription amount (ZAR → cents for PayFast API).
+ * Used to convert launch promo pricing to full price after promo_ends_at.
+ */
+export async function updatePayFastSubscriptionAmount(
+  token: string,
+  amountZar: number,
+  fetchImpl: typeof fetch = fetch
+): Promise<{ success: boolean; error?: string }> {
+  if (!token) {
+    return { success: false, error: "Missing subscription token" };
+  }
+  if (!getPayFastMerchantId() || !process.env.PAYFAST_MERCHANT_KEY) {
+    return { success: false, error: "Payment gateway is not configured" };
+  }
+  if (!Number.isFinite(amountZar) || amountZar <= 0) {
+    return { success: false, error: "Invalid subscription amount" };
+  }
+
+  const amountCents = Math.round(amountZar * 100);
+  const testing = process.env.PAYFAST_SANDBOX === "true" ? "?testing=true" : "";
+  const url = `https://api.payfast.co.za/subscriptions/${encodeURIComponent(token)}/update${testing}`;
+
+  try {
+    const response = await fetchImpl(url, {
+      method: "PATCH",
+      headers: createPayFastApiHeaders(),
+      body: JSON.stringify({ amount: amountCents }),
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      console.error("PayFast subscription update failed:", response.status, body);
+      return {
+        success: false,
+        error: `PayFast update failed (${response.status})`,
+      };
+    }
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("PayFast subscription update error:", message);
+    return { success: false, error: message };
+  }
+}
+
 export function createSubscriptionPayment(params: {
   businessId: string;
   email: string;
   tierName: string;
   amount: number;
   paymentId: string;
+  /** Recurring amount; defaults to amount when omitted. */
+  recurringAmount?: number;
+  itemDescription?: string;
 }) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
   const tierLabel = params.tierName.charAt(0).toUpperCase() + params.tierName.slice(1);
+  const recurring = params.recurringAmount ?? params.amount;
   return buildPayFastFormData({
     return_url: `${appUrl}/dashboard/billing?success=true`,
     cancel_url: `${appUrl}/dashboard/billing?cancelled=true`,
@@ -391,10 +440,11 @@ export function createSubscriptionPayment(params: {
     m_payment_id: params.paymentId,
     amount: params.amount,
     item_name: `Find My Biz ${tierLabel} Membership`,
-    item_description: `Monthly subscription for ${tierLabel} tier`,
+    item_description:
+      params.itemDescription ?? `Monthly subscription for ${tierLabel} tier`,
     subscription_type: "1",
     billing_date: new Date().toISOString().split("T")[0],
-    recurring_amount: params.amount.toFixed(2),
+    recurring_amount: recurring.toFixed(2),
     frequency: "3",
     cycles: "0",
   });

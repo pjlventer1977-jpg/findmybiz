@@ -14,6 +14,12 @@ import {
   MEMBERSHIP_PLANS,
   type MembershipTier,
 } from "@/constants/membership";
+import {
+  getPromoPrice,
+  isLaunchPromoActive,
+  LAUNCH_PROMO_LABEL,
+  LAUNCH_PROMO_MONTHS,
+} from "@/constants/launch-promo";
 import { cn, formatCurrency } from "@/lib/utils";
 
 export const metadata = {
@@ -81,6 +87,12 @@ export default function PricingPage() {
           <p className="mt-5 text-sm font-semibold text-sa-gold">
             Start free · Upgrade when you&apos;re ready
           </p>
+          {isLaunchPromoActive() && (
+            <p className="mx-auto mt-3 max-w-xl rounded-lg border border-sa-gold/40 bg-white/80 px-4 py-2 text-sm font-medium text-sa-blue">
+              {LAUNCH_PROMO_LABEL}. Then full price from month{" "}
+              {LAUNCH_PROMO_MONTHS + 1}.
+            </p>
+          )}
         </section>
 
         <div className="mx-auto mb-10 max-w-5xl rounded-2xl border border-sa-green/20 bg-gradient-to-r from-sa-green/5 via-white to-sa-gold/5 px-4 py-4 shadow-sm sm:px-6">
@@ -103,6 +115,8 @@ export default function PricingPage() {
         <div className="mx-auto mb-16 grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {MEMBERSHIP_PLANS.map((plan) => {
           const isPopular = plan.tier === "professional";
+          const showPromo = isLaunchPromoActive() && plan.price > 0;
+          const promoPrice = getPromoPrice(plan.price);
 
           return (
             <Card
@@ -127,14 +141,31 @@ export default function PricingPage() {
                 >
                   {leadsLabel(plan.leadsPerMonth)}
                 </p>
-                <p className="text-2xl font-bold text-slate-900">
-                  {plan.price === 0 ? "Free" : formatCurrency(plan.price)}
-                  {plan.price > 0 && (
-                    <span className="text-sm font-normal text-muted-foreground">
-                      /mo
-                    </span>
-                  )}
-                </p>
+                {showPromo ? (
+                  <div>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {formatCurrency(promoPrice)}
+                      <span className="text-sm font-normal text-muted-foreground">
+                        /mo
+                      </span>
+                    </p>
+                    <p className="text-sm text-muted-foreground line-through">
+                      {formatCurrency(plan.price)}/mo
+                    </p>
+                    <p className="text-xs font-semibold text-sa-gold">
+                      50% off for {LAUNCH_PROMO_MONTHS} months
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold text-slate-900">
+                    {plan.price === 0 ? "Free" : formatCurrency(plan.price)}
+                    {plan.price > 0 && (
+                      <span className="text-sm font-normal text-muted-foreground">
+                        /mo
+                      </span>
+                    )}
+                  </p>
+                )}
               </CardHeader>
               <CardContent className="flex flex-1 flex-col">
                 <ul className="mb-6 flex-1 space-y-2 text-sm">

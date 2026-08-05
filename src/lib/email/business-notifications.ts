@@ -394,3 +394,39 @@ export async function sendSubscriptionPaymentFailedOwnerEmail(payload: {
 </body></html>`,
   });
 }
+
+export async function sendPromoEndedOwnerEmail(payload: {
+  businessName: string;
+  businessEmail: string;
+  contactPerson?: string | null;
+  tier: MembershipTier;
+  fullAmount: number;
+}): Promise<{ success: boolean; error?: string }> {
+  const plan = getPlanByTier(payload.tier);
+  const billingUrl = `${getAppUrl()}/dashboard/billing`;
+
+  return sendBusinessEmail({
+    to: payload.businessEmail,
+    subject: `Launch special ended — your ${plan.name} plan is now full price`,
+    text: [
+      `Hi ${payload.contactPerson || payload.businessName},`,
+      "",
+      `Your Find My Biz launch special (50% off for 3 months) has ended.`,
+      `Your ${plan.name} plan will now bill at R${payload.fullAmount.toFixed(2)}/month via PayFast.`,
+      "",
+      `Billing: ${billingUrl}`,
+    ].join("\n"),
+    html: `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #002395; color: white; padding: 20px; border-radius: 8px 8px 0 0;"><h1 style="margin: 0; font-size: 22px;">Launch Special Ended</h1></div>
+  <div style="border: 1px solid #e5e5e5; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+    <p>Hi ${escapeHtml(payload.contactPerson || payload.businessName)},</p>
+    <p>Your Find My Biz launch special (50% off for 3 months) has ended.</p>
+    <p>Your <strong>${escapeHtml(plan.name)}</strong> plan will now bill at <strong>R${payload.fullAmount.toFixed(2)}/month</strong> via PayFast.</p>
+    <div style="text-align: center; margin-top: 24px;"><a href="${billingUrl}" style="display: inline-block; background: #007A4D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Open Billing</a></div>
+  </div>
+</body></html>`,
+  });
+}
