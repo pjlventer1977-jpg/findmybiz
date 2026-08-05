@@ -35,6 +35,7 @@ interface ProfileFormProps {
   categories: Category[];
   categoryIds: string[];
   serviceAreas: ServiceAreaSelection[];
+  wholeProvinceIds: string[];
 }
 
 export function ProfileForm({
@@ -44,6 +45,7 @@ export function ProfileForm({
   categories,
   categoryIds: initialCategoryIds,
   serviceAreas: initialServiceAreas,
+  wholeProvinceIds: initialWholeProvinceIds,
 }: ProfileFormProps) {
   const router = useRouter();
   const [description, setDescription] = useState(business.description ?? "");
@@ -53,6 +55,9 @@ export function ProfileForm({
   const [categoryIds, setCategoryIds] = useState<string[]>(initialCategoryIds);
   const [serviceAreas, setServiceAreas] =
     useState<ServiceAreaSelection[]>(initialServiceAreas);
+  const [wholeProvinceIds, setWholeProvinceIds] = useState<string[]>(
+    initialWholeProvinceIds
+  );
   const [primaryCityId, setPrimaryCityId] = useState(
     business.city_id ?? initialServiceAreas[0]?.cityId ?? ""
   );
@@ -79,13 +84,15 @@ export function ProfileForm({
         return;
       }
 
-      if (serviceAreas.length === 0 || !primaryCityId) {
-        setError("Please add at least one service area and mark a primary city.");
+      if ((serviceAreas.length === 0 && wholeProvinceIds.length === 0) || !primaryCityId) {
+        setError(
+          "Please add at least one city/town or whole province, and choose a primary base city."
+        );
         setSaving(false);
         return;
       }
 
-      const primary = serviceAreas.find((a) => a.cityId === primaryCityId) ?? serviceAreas[0];
+      const primary = serviceAreas.find((a) => a.cityId === primaryCityId);
 
       const res = await fetch(`/api/businesses/${business.id}/profile`, {
         method: "PATCH",
@@ -95,10 +102,11 @@ export function ProfileForm({
           phone,
           email,
           website,
-          provinceId: primary.provinceId,
-          cityId: primary.cityId,
+          provinceId: primary?.provinceId ?? null,
+          cityId: primaryCityId,
           categoryIds,
           serviceCityIds: serviceAreas.map((a) => a.cityId),
+          wholeProvinceIds,
         }),
       });
 
@@ -228,6 +236,8 @@ export function ProfileForm({
               provinces={provinces}
               value={serviceAreas}
               onChange={setServiceAreas}
+              wholeProvinceIds={wholeProvinceIds}
+              onWholeProvincesChange={setWholeProvinceIds}
               primaryCityId={primaryCityId}
               onPrimaryChange={setPrimaryCityId}
               required

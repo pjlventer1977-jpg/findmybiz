@@ -15,6 +15,7 @@ const profileSchema = z.object({
   /** @deprecated Prefer categoryIds */
   categoryId: z.string().uuid().optional().nullable(),
   serviceCityIds: z.array(z.string().uuid()).max(20).optional(),
+  wholeProvinceIds: z.array(z.string().uuid()).max(9).optional(),
 });
 
 function normalizeWebsite(value: string | null | undefined) {
@@ -65,11 +66,12 @@ export async function PATCH(
       phone,
       email,
       website,
-      provinceId,
+      provinceId: provinceIdInput,
       cityId,
       categoryIds: categoryIdsInput,
       categoryId,
       serviceCityIds,
+      wholeProvinceIds,
     } = parsed.data;
 
     const categoryIds =
@@ -79,74 +81,92 @@ export async function PATCH(
           ? [categoryId]
           : undefined;
 
-    const [{ data: currentCategories }, { data: currentAreas }] = await Promise.all([
+    const [
+      { data: currentCategories },
+      { data: currentAreas },
+      { data: currentProvinces },
+    ] = await Promise.all([
       supabase.from("business_categories").select("category_id").eq("business_id", id),
       supabase.from("business_service_areas").select("city_id").eq("business_id", id),
+      supabase.from("business_service_provinces").select("province_id").eq("business_id", id),
     ]);
 
     const currentCategoryIds = (currentCategories ?? []).map((row) => row.category_id);
     const currentAreaIds = (currentAreas ?? []).map((row) => row.city_id);
+    const currentProvinceIds = (currentProvinces ?? []).map((row) => row.province_id);
 
-    const normalizedDescription = description?.trim() || null;
-    const normalizedPhone = phone.trim();
-    const normalizedEmail = email.trim().toLowerCase();
-    const normalizedWebsite = normalizeWebsite(website);
-    const changedFields = [
-      normalizedDescription !== (business.description?.trim() || null) && "Description",
-      normalizedPhone !== business.phone && "Phone number",
-      normalizedEmail !== business.email.toLowerCase() && "Email address",
-      normalizedWebsite !== normalizeWebsite(business.website) && "Website",
-      (provinceId ?? null) !== (business.province_id ?? null) && "Province",
-      (cityId ?? null) !== (business.city_id ?? null) && "Primary city / town",
-      categoryIds &&
-        !sameIdSet(categoryIds, currentCategoryIds) &&
-        "Service categories",
-      serviceCityIds &&
-        !sameIdSet([...new Set(serviceCityIds)], currentAreaIds) &&
-        "Service areas",
-    ].filter(Boolean) as string[];
+    let resolvedProvinceId = provinceIdInput ?? null;
 
     if (cityId) {
-      if (!provinceId) {
-        return NextResponse.json(
-          { error: "Select a province before selecting a city." },
-          { status: 400 }
-        );
-      }
-
       const { data: city, error: cityError } = await supabase
         .from("cities")
         .select("province_id")
         .eq("id", cityId)
         .single();
 
-      if (cityError || !city || city.province_id !== provinceId) {
+      if (cityError || !city) {
+        return NextResponse.json({ error: "Primary city is invalid." }, { status: 400 });
+      }
+
+      if (resolvedProvinceId && city.province_id !== resolvedProvinceId) {
         return NextResponse.json(
           { error: "Please select a city that belongs to the selected province." },
           { status: 400 }
         );
       }
+
+      resolvedProvinceId = city.province_id;
     }
 
-    if (serviceCityIds && serviceCityIds.length > 0) {
-      const uniqueCities = [...new Set(serviceCityIds)];
-      if (cityId && !uniqueCities.includes(cityId)) {
+    if (serviceCityIds !== undefined || wholeProvinceIds !== undefined) {
+      const uniqueCities = [...new Set(serviceCityIds ?? currentAreaIds)];
+      const uniqueProvinces = [...new Set(wholeProvinceIds ?? currentProvinceIds)];
+
+      if (uniqueCities.length === 0 && uniqueProvinces.length === 0) {
         return NextResponse.json(
-          { error: "Primary city must be included in your service areas." },
+          { error: "Add at least one city/town or whole province." },
           { status: 400 }
         );
       }
 
-      const { data: cities, error: citiesError } = await supabase
-        .from("cities")
-        .select("id")
-        .in("id", uniqueCities);
+      if (cityId) {
+        const coveredByCity = uniqueCities.includes(cityId);
+        const coveredByProvince =
+          resolvedProvinceId !== null && uniqueProvinces.includes(resolvedProvinceId);
+        if (!coveredByCity && !coveredByProvince) {
+          return NextResponse.json(
+            { error: "Primary city must be within your selected service areas." },
+            { status: 400 }
+          );
+        }
+      }
 
-      if (citiesError || !cities || cities.length !== uniqueCities.length) {
-        return NextResponse.json(
-          { error: "One or more service area cities are invalid." },
-          { status: 400 }
-        );
+      if (serviceCityIds && uniqueCities.length > 0) {
+        const { data: cities, error: citiesError } = await supabase
+          .from("cities")
+          .select("id")
+          .in("id", uniqueCities);
+
+        if (citiesError || !cities || cities.length !== uniqueCities.length) {
+          return NextResponse.json(
+            { error: "One or more service area cities are invalid." },
+            { status: 400 }
+          );
+        }
+      }
+
+      if (wholeProvinceIds && uniqueProvinces.length > 0) {
+        const { data: provinces, error: provincesError } = await supabase
+          .from("provinces")
+          .select("id")
+          .in("id", uniqueProvinces);
+
+        if (provincesError || !provinces || provinces.length !== uniqueProvinces.length) {
+          return NextResponse.json(
+            { error: "One or more whole-province selections are invalid." },
+            { status: 400 }
+          );
+        }
       }
     }
 
@@ -164,6 +184,28 @@ export async function PATCH(
       }
     }
 
+    const normalizedDescription = description?.trim() || null;
+    const normalizedPhone = phone.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedWebsite = normalizeWebsite(website);
+    const changedFields = [
+      normalizedDescription !== (business.description?.trim() || null) && "Description",
+      normalizedPhone !== business.phone && "Phone number",
+      normalizedEmail !== business.email.toLowerCase() && "Email address",
+      normalizedWebsite !== normalizeWebsite(business.website) && "Website",
+      (resolvedProvinceId ?? null) !== (business.province_id ?? null) && "Province",
+      (cityId ?? null) !== (business.city_id ?? null) && "Primary city / town",
+      categoryIds &&
+        !sameIdSet(categoryIds, currentCategoryIds) &&
+        "Service categories",
+      serviceCityIds &&
+        !sameIdSet([...new Set(serviceCityIds)], currentAreaIds) &&
+        "Service areas",
+      wholeProvinceIds &&
+        !sameIdSet([...new Set(wholeProvinceIds)], currentProvinceIds) &&
+        "Whole-province coverage",
+    ].filter(Boolean) as string[];
+
     const { error } = await supabase
       .from("businesses")
       .update({
@@ -171,7 +213,7 @@ export async function PATCH(
         phone: normalizedPhone,
         email: normalizedEmail,
         website: normalizedWebsite,
-        province_id: provinceId ?? null,
+        province_id: resolvedProvinceId,
         city_id: cityId ?? null,
         updated_at: new Date().toISOString(),
       })
@@ -234,6 +276,30 @@ export async function PATCH(
 
         if (addAreasError) {
           return NextResponse.json({ error: addAreasError.message }, { status: 500 });
+        }
+      }
+    }
+
+    if (wholeProvinceIds) {
+      const uniqueProvinces = [...new Set(wholeProvinceIds)];
+      const { error: removeProvError } = await supabase
+        .from("business_service_provinces")
+        .delete()
+        .eq("business_id", id);
+
+      if (removeProvError) {
+        return NextResponse.json({ error: removeProvError.message }, { status: 500 });
+      }
+
+      if (uniqueProvinces.length > 0) {
+        const { error: addProvError } = await supabase
+          .from("business_service_provinces")
+          .insert(
+            uniqueProvinces.map((province_id) => ({ business_id: id, province_id }))
+          );
+
+        if (addProvError) {
+          return NextResponse.json({ error: addProvError.message }, { status: 500 });
         }
       }
     }

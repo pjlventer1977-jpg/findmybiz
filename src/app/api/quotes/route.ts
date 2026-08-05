@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
         is_local_champion,
         business_categories(category_id),
         business_service_areas(city_id, city:cities(id, province_id)),
+        business_service_provinces(province_id),
         lead_credits(balance)
       `)
       .eq("status", "approved");
@@ -99,18 +100,24 @@ export async function POST(request: NextRequest) {
 
     const candidates = (businesses ?? []).map((b) => {
       const areaRows = b.business_service_areas ?? [];
+      const wholeProvinceRows = b.business_service_provinces ?? [];
+      const whole_province_ids = wholeProvinceRows
+        .map((row: { province_id: string }) => row.province_id)
+        .filter(Boolean);
+
       const service_city_ids = areaRows
         .map((row: { city_id: string }) => row.city_id)
         .filter(Boolean);
       const service_province_ids = [
-        ...new Set(
-          areaRows
+        ...new Set([
+          ...whole_province_ids,
+          ...areaRows
             .map((row: { city?: { province_id?: string } | { province_id?: string }[] | null }) => {
               const city = Array.isArray(row.city) ? row.city[0] : row.city;
               return city?.province_id;
             })
-            .filter((id: string | undefined): id is string => Boolean(id))
-        ),
+            .filter((id: string | undefined): id is string => Boolean(id)),
+        ]),
       ];
 
       // Always include HQ province/city for backward compatibility
@@ -131,6 +138,7 @@ export async function POST(request: NextRequest) {
         ) ?? [],
         service_city_ids,
         service_province_ids,
+        whole_province_ids,
         lead_credits_balance: getLeadCreditsBalance(b.lead_credits),
         is_local_champion: b.is_local_champion,
         lead_response_rate: b.lead_response_rate,

@@ -129,24 +129,34 @@ export async function searchBusinesses(params: {
   if (params.city) {
     const { data: cityRow } = await supabase
       .from("cities")
-      .select("id")
+      .select("id, province_id")
       .eq("slug", params.city)
       .maybeSingle();
 
     if (!cityRow) return [];
 
-    const [{ data: areaLinks }, { data: hqBusinesses }] = await Promise.all([
-      supabase
-        .from("business_service_areas")
-        .select("business_id")
-        .eq("city_id", cityRow.id),
-      supabase.from("businesses").select("id").eq("city_id", cityRow.id).eq("status", "approved"),
-    ]);
+    const [{ data: areaLinks }, { data: hqBusinesses }, { data: wholeProvinceLinks }] =
+      await Promise.all([
+        supabase
+          .from("business_service_areas")
+          .select("business_id")
+          .eq("city_id", cityRow.id),
+        supabase
+          .from("businesses")
+          .select("id")
+          .eq("city_id", cityRow.id)
+          .eq("status", "approved"),
+        supabase
+          .from("business_service_provinces")
+          .select("business_id")
+          .eq("province_id", cityRow.province_id),
+      ]);
 
     cityBusinessIds = [
       ...new Set([
         ...(areaLinks ?? []).map((row) => row.business_id),
         ...(hqBusinesses ?? []).map((row) => row.id),
+        ...(wholeProvinceLinks ?? []).map((row) => row.business_id),
       ]),
     ];
     if (cityBusinessIds.length === 0) return [];
@@ -186,8 +196,16 @@ export async function searchBusinesses(params: {
             .in("city_id", cityIds)
         : { data: [] as { business_id: string }[] };
 
+      const { data: wholeProvinceLinks } = await supabase
+        .from("business_service_provinces")
+        .select("business_id")
+        .eq("province_id", prov.id);
+
       const provinceBusinessIds = [
-        ...new Set((areaLinks ?? []).map((row) => row.business_id)),
+        ...new Set([
+          ...(areaLinks ?? []).map((row) => row.business_id),
+          ...(wholeProvinceLinks ?? []).map((row) => row.business_id),
+        ]),
       ];
 
       if (provinceBusinessIds.length > 0) {
