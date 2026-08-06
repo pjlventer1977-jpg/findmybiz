@@ -33,3 +33,8 @@ export async function createServiceClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 }
+
+/** Server-only reads for the public directory (approved listings only). */
+export async function createCatalogClient() {
+  return createServiceClient();
+}
