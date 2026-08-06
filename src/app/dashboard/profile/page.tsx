@@ -23,6 +23,7 @@ export default async function DashboardProfilePage() {
     categories,
     businessCategoriesResult,
     serviceAreasResult,
+    wholeProvincesResult,
   ] = await Promise.all([
     supabase
       .from("business_documents")
@@ -39,11 +40,16 @@ export default async function DashboardProfilePage() {
       .from("business_service_areas")
       .select("city_id, city:cities(id, name, province_id, province:provinces(id, name))")
       .eq("business_id", business.id),
+    supabase
+      .from("business_service_provinces")
+      .select("province_id")
+      .eq("business_id", business.id),
   ]);
 
   const documents = documentsResult.data ?? [];
   const categoryIds = (businessCategoriesResult.data ?? []).map((row) => row.category_id);
   const primaryCategoryId = categoryIds[0] ?? null;
+  const wholeProvinceIds = (wholeProvincesResult.data ?? []).map((row) => row.province_id);
 
   const serviceAreas: ServiceAreaSelection[] = (serviceAreasResult.data ?? [])
     .map((row) => {
@@ -161,6 +167,7 @@ export default async function DashboardProfilePage() {
         categories={categories}
         categoryIds={categoryIds}
         serviceAreas={serviceAreas}
+        wholeProvinceIds={wholeProvinceIds}
       />
     </div>
   );

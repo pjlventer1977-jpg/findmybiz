@@ -9,8 +9,10 @@ export interface LeadRoutingCandidate {
   category_ids: string[];
   /** Cities where the business provides services (includes HQ when backfilled). */
   service_city_ids: string[];
-  /** Provinces covered by HQ or any service area. */
+  /** Provinces covered by HQ, city service areas, or whole-province selection. */
   service_province_ids: string[];
+  /** Provinces where the business serves every city/town. */
+  whole_province_ids: string[];
   lead_credits_balance: number;
   is_local_champion: boolean;
   lead_response_rate: number;
@@ -70,9 +72,20 @@ function servesProvince(
   return candidate.service_province_ids.includes(provinceId);
 }
 
-function servesCity(candidate: LeadRoutingCandidate, cityId: string): boolean {
+function servesCity(
+  candidate: LeadRoutingCandidate,
+  cityId: string,
+  cityProvinceId?: string
+): boolean {
   if (candidate.city_id === cityId) return true;
-  return candidate.service_city_ids.includes(cityId);
+  if (candidate.service_city_ids.includes(cityId)) return true;
+  if (
+    cityProvinceId &&
+    candidate.whole_province_ids.includes(cityProvinceId)
+  ) {
+    return true;
+  }
+  return false;
 }
 
 export function routeLeadsToBusinesses(
@@ -97,8 +110,8 @@ export function routeLeadsToBusinesses(
       TIER_PRIORITY[b.membership_tier] - TIER_PRIORITY[a.membership_tier];
     if (tierDiff !== 0) return tierDiff;
 
-    const cityMatchA = servesCity(a, request.city_id) ? 1 : 0;
-    const cityMatchB = servesCity(b, request.city_id) ? 1 : 0;
+    const cityMatchA = servesCity(a, request.city_id, request.province_id) ? 1 : 0;
+    const cityMatchB = servesCity(b, request.city_id, request.province_id) ? 1 : 0;
     if (cityMatchB !== cityMatchA) return cityMatchB - cityMatchA;
 
     if (b.is_local_champion !== a.is_local_champion) {

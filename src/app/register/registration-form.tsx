@@ -40,6 +40,7 @@ export function BusinessRegistrationForm({
   const [selectedTier, setSelectedTier] = useState("free");
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [serviceAreas, setServiceAreas] = useState<ServiceAreaSelection[]>([]);
+  const [wholeProvinceIds, setWholeProvinceIds] = useState<string[]>([]);
   const [primaryCityId, setPrimaryCityId] = useState("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -53,8 +54,10 @@ export function BusinessRegistrationForm({
       return;
     }
 
-    if (serviceAreas.length === 0 || !primaryCityId) {
-      setError("Please add at least one service area and mark a primary city.");
+    if ((serviceAreas.length === 0 && wholeProvinceIds.length === 0) || !primaryCityId) {
+      setError(
+        "Please add at least one city/town or whole province, and choose a primary base city."
+      );
       setLoading(false);
       return;
     }
@@ -69,6 +72,7 @@ export function BusinessRegistrationForm({
       selectedTier: selectedTier as "free" | "starter" | "professional" | "enterprise",
       categoryIds,
       serviceCityIds: serviceAreas.map((a) => a.cityId),
+      wholeProvinceIds,
       primaryCityId,
     });
 
@@ -158,6 +162,8 @@ export function BusinessRegistrationForm({
               provinces={provinces}
               value={serviceAreas}
               onChange={setServiceAreas}
+              wholeProvinceIds={wholeProvinceIds}
+              onWholeProvincesChange={setWholeProvinceIds}
               primaryCityId={primaryCityId}
               onPrimaryChange={setPrimaryCityId}
               required

@@ -71,6 +71,8 @@ Expected: 9 provinces, 150+ cities, 80+ suburbs, **218 categories** (22 parent i
 
 > **Multi service areas:** run `supabase/migrations/015_business_service_areas.sql` so businesses can serve multiple cities/towns (`business_service_areas`). Existing HQ cities are backfilled automatically.
 
+> **Whole-province coverage:** run `supabase/migrations/016_business_service_provinces.sql` so businesses can select “Whole Gauteng” (etc.) without listing every city.
+
 ---
 
 ## Option B: Supabase CLI (Recommended for developers)
