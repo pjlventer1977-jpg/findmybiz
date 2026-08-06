@@ -33,13 +33,14 @@ export function SearchFilters({
 }: SearchFiltersProps) {
   const router = useRouter();
   const [categorySlug, setCategorySlug] = useState(currentParams.category ?? "");
+  const [provinceSlug, setProvinceSlug] = useState(currentParams.province ?? "all");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const params = new URLSearchParams();
     const q = formData.get("q") as string;
-    const province = formData.get("province") as string;
+    const province = (formData.get("province") as string) || provinceSlug;
 
     if (q) params.set("q", q);
     if (province && province !== "all") params.set("province", province);
@@ -64,7 +65,8 @@ export function SearchFilters({
 
       <div>
         <Label>Province</Label>
-        <Select name="province" defaultValue={currentParams.province ?? "all"}>
+        <input type="hidden" name="province" value={provinceSlug} />
+        <Select value={provinceSlug} onValueChange={setProvinceSlug}>
           <SelectTrigger>
             <SelectValue placeholder="All provinces" />
           </SelectTrigger>
