@@ -102,12 +102,6 @@ export async function getMatchingCategoryIds(slug: string): Promise<string[]> {
 
 type CatalogClient = Awaited<ReturnType<typeof createCatalogClient>>;
 
-const BUSINESS_LIST_SELECT = `
-  *,
-  province:provinces(*),
-  city:cities(*)
-`;
-
 async function attachCategoriesToBusinesses(
   supabase: CatalogClient,
   businesses: Business[]
@@ -143,6 +137,48 @@ async function attachCategoriesToBusinesses(
     ...business,
     categories: categoriesByBusiness.get(business.id) ?? [],
   }));
+}
+
+async function attachLocationsToBusinesses(
+  supabase: CatalogClient,
+  businesses: Business[]
+): Promise<Business[]> {
+  if (businesses.length === 0) return [];
+
+  const provinceIds = [
+    ...new Set(
+      businesses.map((business) => business.province_id).filter(Boolean) as string[]
+    ),
+  ];
+  const cityIds = [
+    ...new Set(businesses.map((business) => business.city_id).filter(Boolean) as string[]),
+  ];
+
+  const [{ data: provinces }, { data: cities }] = await Promise.all([
+    provinceIds.length
+      ? supabase.from("provinces").select("*").in("id", provinceIds)
+      : Promise.resolve({ data: [] as Province[] }),
+    cityIds.length
+      ? supabase.from("cities").select("*").in("id", cityIds)
+      : Promise.resolve({ data: [] as City[] }),
+  ]);
+
+  const provinceById = new Map((provinces ?? []).map((province) => [province.id, province]));
+  const cityById = new Map((cities ?? []).map((city) => [city.id, city]));
+
+  return businesses.map((business) => ({
+    ...business,
+    province: business.province_id ? provinceById.get(business.province_id) ?? null : null,
+    city: business.city_id ? cityById.get(business.city_id) ?? null : null,
+  }));
+}
+
+async function hydrateBusinessList(
+  supabase: CatalogClient,
+  businesses: Business[]
+): Promise<Business[]> {
+  const withLocations = await attachLocationsToBusinesses(supabase, businesses);
+  return attachCategoriesToBusinesses(supabase, withLocations);
 }
 
 export async function searchBusinesses(params: {
@@ -248,10 +284,7 @@ export async function searchBusinesses(params: {
     if (textMatchBusinessIds.length === 0) return [];
   }
 
-  let query = supabase
-    .from("businesses")
-    .select(BUSINESS_LIST_SELECT)
-    .eq("status", "approved");
+  let query = supabase.from("businesses").select("*").eq("status", "approved");
 
   if (categoryBusinessIds) {
     query = query.in("id", categoryBusinessIds);
@@ -277,11 +310,17 @@ export async function searchBusinesses(params: {
   const { data, error } = await query;
 
   if (error) {
-    console.error("searchBusinesses query failed:", error.message);
+    console.error(
+      "searchBusinesses query failed:",
+      error.message,
+      error.details,
+      error.hint,
+      error.code
+    );
     return [];
   }
 
-  const rows = data ?? [];
+  const rows = (data ?? []) as Business[];
   const tierRank = { enterprise: 4, professional: 3, starter: 2, free: 1 } as const;
   rows.sort((a, b) => {
     const tierDiff =
@@ -291,7 +330,7 @@ export async function searchBusinesses(params: {
     return (b.biz_trust_score ?? 0) - (a.biz_trust_score ?? 0);
   });
 
-  return attachCategoriesToBusinesses(supabase, rows as Business[]);
+  return hydrateBusinessList(supabase, rows);
 }
 
 async function getBusinessIdsForProvinceScope(
@@ -330,12 +369,7 @@ export async function getBusinessBySlug(slug: string): Promise<Business | null> 
   const supabase = await createCatalogClient();
   const { data, error } = await supabase
     .from("businesses")
-    .select(`
-      *,
-      province:provinces(*),
-      city:cities(*),
-      suburb:suburbs(*)
-    `)
+    .select("*")
     .eq("slug", slug)
     .eq("status", "approved")
     .single();
@@ -349,15 +383,26 @@ export async function getBusinessBySlug(slug: string): Promise<Business | null> 
 
   if (!data) return null;
 
-  const [withCategories] = await attachCategoriesToBusinesses(supabase, [data as Business]);
-  return withCategories ?? null;
+  let business = data as Business;
+
+  if (business.suburb_id) {
+    const { data: suburb } = await supabase
+      .from("suburbs")
+      .select("*")
+      .eq("id", business.suburb_id)
+      .maybeSingle();
+    business = { ...business, suburb: suburb ?? null };
+  }
+
+  const [hydrated] = await hydrateBusinessList(supabase, [business]);
+  return hydrated ?? null;
 }
 
 export async function getFeaturedBusinesses(): Promise<Business[]> {
   const supabase = await createCatalogClient();
   const { data, error } = await supabase
     .from("businesses")
-    .select(BUSINESS_LIST_SELECT)
+    .select("*")
     .eq("status", "approved")
     .in("membership_tier", ["professional", "enterprise"])
     .order("biz_trust_score", { ascending: false })
@@ -368,7 +413,7 @@ export async function getFeaturedBusinesses(): Promise<Business[]> {
     return [];
   }
 
-  const businesses = await attachCategoriesToBusinesses(supabase, (data ?? []) as Business[]);
+  const businesses = await hydrateBusinessList(supabase, (data ?? []) as Business[]);
 
   return businesses.sort((a, b) => {
     const tierRank = { enterprise: 2, professional: 1 } as const;
