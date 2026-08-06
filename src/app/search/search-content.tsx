@@ -45,6 +45,11 @@ export async function SearchPageContent({ params }: SearchPageContentProps) {
         {businesses.length} verified businesses found
         {params.q && ` for "${params.q}"`}
         {categoryLabel && ` in ${categoryLabel}`}
+        {params.q && !categoryLabel && (
+          <span className="block text-xs mt-1">
+            Matching business names, descriptions, and service categories
+          </span>
+        )}
       </p>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">

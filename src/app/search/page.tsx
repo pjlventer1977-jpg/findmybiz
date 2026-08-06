@@ -3,7 +3,8 @@ import { SearchPageContent } from "./search-content";
 
 export const metadata = {
   title: "Search Businesses",
-  description: "Search for verified businesses across South Africa by name, category, or location.",
+  description:
+    "Search verified South African businesses by service, trade, category, or business name.",
 };
 
 export const dynamic = "force-dynamic";

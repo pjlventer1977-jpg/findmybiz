@@ -59,8 +59,11 @@ export function SearchFilters({
           id="q"
           name="q"
           defaultValue={currentParams.q}
-          placeholder="Business name..."
+          placeholder="e.g. plumber, web design, electrician..."
         />
+        <p className="mt-1 text-xs text-muted-foreground">
+          Search by service, trade, category, or business name
+        </p>
       </div>
 
       <div>
