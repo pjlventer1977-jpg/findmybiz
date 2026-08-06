@@ -1,4 +1,9 @@
 import { createClient, createCatalogClient } from "@/lib/supabase/server";
+import {
+  businessMatchesAllSearchTerms,
+  categoryMatchesAllSearchTerms,
+  parseSearchTerms,
+} from "@/lib/search/text-match";
 import type { Business, Category, Province, City, Special, Event } from "@/types";
 
 export async function getProvinces(): Promise<Province[]> {
@@ -107,13 +112,18 @@ async function getCategoryIdsMatchingSearchTerm(
   supabase: CatalogClient,
   term: string
 ): Promise<string[]> {
-  const slugTerm = term.trim().replace(/\s+/g, "-");
-  const { data: matches } = await supabase
-    .from("categories")
-    .select("id, parent_id")
-    .or(`name.ilike.%${term}%,slug.ilike.%${slugTerm}%`);
+  const terms = parseSearchTerms(term);
+  if (terms.length === 0) return [];
 
-  if (!matches?.length) return [];
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("id, parent_id, name, slug");
+
+  const matches = (categories ?? []).filter((category) =>
+    categoryMatchesAllSearchTerms(category, terms)
+  );
+
+  if (matches.length === 0) return [];
 
   const ids = new Set<string>();
   const parentIdsToExpand: string[] = [];
@@ -136,6 +146,28 @@ async function getCategoryIdsMatchingSearchTerm(
   }
 
   return [...ids];
+}
+
+async function getBusinessIdsMatchingSearchText(
+  supabase: CatalogClient,
+  term: string
+): Promise<string[]> {
+  const terms = parseSearchTerms(term);
+  if (terms.length === 0) return [];
+
+  const { data: businesses, error } = await supabase
+    .from("businesses")
+    .select("id, name, trading_name, description")
+    .eq("status", "approved");
+
+  if (error) {
+    console.error("getBusinessIdsMatchingSearchText failed:", error.message);
+    return [];
+  }
+
+  return (businesses ?? [])
+    .filter((business) => businessMatchesAllSearchTerms(business, terms))
+    .map((business) => business.id);
 }
 
 async function attachCategoriesToBusinesses(
@@ -283,22 +315,10 @@ export async function searchBusinesses(params: {
   let textMatchBusinessIds: string[] | null = null;
   if (params.q?.trim()) {
     const term = params.q.trim();
-    const [{ data: nameMatches, error: nameError }, matchedCategoryIds] =
-      await Promise.all([
-        supabase
-          .from("businesses")
-          .select("id")
-          .eq("status", "approved")
-          .or(
-            `name.ilike.%${term}%,trading_name.ilike.%${term}%,description.ilike.%${term}%`
-          ),
-        getCategoryIdsMatchingSearchTerm(supabase, term),
-      ]);
-
-    if (nameError) {
-      console.error("searchBusinesses text filter failed:", nameError.message);
-      return [];
-    }
+    const [nameMatches, matchedCategoryIds] = await Promise.all([
+      getBusinessIdsMatchingSearchText(supabase, term),
+      getCategoryIdsMatchingSearchTerm(supabase, term),
+    ]);
 
     let categoryLinkedIds: string[] = [];
     if (matchedCategoryIds.length > 0) {
@@ -309,12 +329,7 @@ export async function searchBusinesses(params: {
       categoryLinkedIds = (links ?? []).map((row) => row.business_id);
     }
 
-    textMatchBusinessIds = [
-      ...new Set([
-        ...(nameMatches ?? []).map((row) => row.id),
-        ...categoryLinkedIds,
-      ]),
-    ];
+    textMatchBusinessIds = [...new Set([...nameMatches, ...categoryLinkedIds])];
     if (textMatchBusinessIds.length === 0) return [];
   }
 
