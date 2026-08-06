@@ -102,6 +102,42 @@ export async function getMatchingCategoryIds(slug: string): Promise<string[]> {
 
 type CatalogClient = Awaited<ReturnType<typeof createCatalogClient>>;
 
+/** Category IDs whose name/slug matches a free-text search (parents include all children). */
+async function getCategoryIdsMatchingSearchTerm(
+  supabase: CatalogClient,
+  term: string
+): Promise<string[]> {
+  const slugTerm = term.trim().replace(/\s+/g, "-");
+  const { data: matches } = await supabase
+    .from("categories")
+    .select("id, parent_id")
+    .or(`name.ilike.%${term}%,slug.ilike.%${slugTerm}%`);
+
+  if (!matches?.length) return [];
+
+  const ids = new Set<string>();
+  const parentIdsToExpand: string[] = [];
+
+  for (const category of matches) {
+    ids.add(category.id);
+    if (!category.parent_id) {
+      parentIdsToExpand.push(category.id);
+    }
+  }
+
+  if (parentIdsToExpand.length > 0) {
+    const { data: children } = await supabase
+      .from("categories")
+      .select("id")
+      .in("parent_id", parentIdsToExpand);
+    for (const child of children ?? []) {
+      ids.add(child.id);
+    }
+  }
+
+  return [...ids];
+}
+
 async function attachCategoriesToBusinesses(
   supabase: CatalogClient,
   businesses: Business[]
@@ -247,17 +283,16 @@ export async function searchBusinesses(params: {
   let textMatchBusinessIds: string[] | null = null;
   if (params.q?.trim()) {
     const term = params.q.trim();
-    const [{ data: nameMatches, error: nameError }, { data: categoryMatches }] =
+    const [{ data: nameMatches, error: nameError }, matchedCategoryIds] =
       await Promise.all([
         supabase
           .from("businesses")
           .select("id")
           .eq("status", "approved")
-          .or(`name.ilike.%${term}%,description.ilike.%${term}%`),
-        supabase
-          .from("categories")
-          .select("id")
-          .or(`name.ilike.%${term}%,slug.ilike.%${term.replace(/\s+/g, "-")}%`),
+          .or(
+            `name.ilike.%${term}%,trading_name.ilike.%${term}%,description.ilike.%${term}%`
+          ),
+        getCategoryIdsMatchingSearchTerm(supabase, term),
       ]);
 
     if (nameError) {
@@ -266,7 +301,6 @@ export async function searchBusinesses(params: {
     }
 
     let categoryLinkedIds: string[] = [];
-    const matchedCategoryIds = (categoryMatches ?? []).map((c) => c.id);
     if (matchedCategoryIds.length > 0) {
       const { data: links } = await supabase
         .from("business_categories")
