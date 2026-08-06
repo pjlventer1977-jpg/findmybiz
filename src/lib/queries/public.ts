@@ -100,6 +100,51 @@ export async function getMatchingCategoryIds(slug: string): Promise<string[]> {
   return [category.id, ...(children ?? []).map((c) => c.id)];
 }
 
+type CatalogClient = Awaited<ReturnType<typeof createCatalogClient>>;
+
+const BUSINESS_LIST_SELECT = `
+  *,
+  province:provinces(*),
+  city:cities(*)
+`;
+
+async function attachCategoriesToBusinesses(
+  supabase: CatalogClient,
+  businesses: Business[]
+): Promise<Business[]> {
+  if (businesses.length === 0) return [];
+
+  const { data: links, error } = await supabase
+    .from("business_categories")
+    .select("business_id, category:categories(*)")
+    .in(
+      "business_id",
+      businesses.map((business) => business.id)
+    );
+
+  if (error) {
+    console.error("attachCategoriesToBusinesses failed:", error.message);
+    return businesses.map((business) => ({
+      ...business,
+      categories: [],
+    }));
+  }
+
+  const categoriesByBusiness = new Map<string, Category[]>();
+  for (const link of links ?? []) {
+    const row = link as unknown as { business_id: string; category: Category | null };
+    if (!row.category) continue;
+    const existing = categoriesByBusiness.get(row.business_id) ?? [];
+    existing.push(row.category);
+    categoriesByBusiness.set(row.business_id, existing);
+  }
+
+  return businesses.map((business) => ({
+    ...business,
+    categories: categoriesByBusiness.get(business.id) ?? [],
+  }));
+}
+
 export async function searchBusinesses(params: {
   q?: string;
   province?: string;
@@ -205,12 +250,7 @@ export async function searchBusinesses(params: {
 
   let query = supabase
     .from("businesses")
-    .select(`
-      *,
-      province:provinces(*),
-      city:cities(*),
-      categories:business_categories(category:categories(*))
-    `)
+    .select(BUSINESS_LIST_SELECT)
     .eq("status", "approved");
 
   if (categoryBusinessIds) {
@@ -230,8 +270,8 @@ export async function searchBusinesses(params: {
   }
 
   query = query
-    .order("membership_tier", { ascending: false })
     .order("biz_trust_score", { ascending: false })
+    .order("created_at", { ascending: false })
     .range(params.offset ?? 0, (params.offset ?? 0) + (params.limit ?? 20) - 1);
 
   const { data, error } = await query;
@@ -241,14 +281,21 @@ export async function searchBusinesses(params: {
     return [];
   }
 
-  return (data ?? []).map((b) => ({
-    ...b,
-    categories: b.categories?.map((bc: { category: Category }) => bc.category) ?? [],
-  }));
+  const rows = data ?? [];
+  const tierRank = { enterprise: 4, professional: 3, starter: 2, free: 1 } as const;
+  rows.sort((a, b) => {
+    const tierDiff =
+      (tierRank[b.membership_tier as keyof typeof tierRank] ?? 0) -
+      (tierRank[a.membership_tier as keyof typeof tierRank] ?? 0);
+    if (tierDiff !== 0) return tierDiff;
+    return (b.biz_trust_score ?? 0) - (a.biz_trust_score ?? 0);
+  });
+
+  return attachCategoriesToBusinesses(supabase, rows as Business[]);
 }
 
 async function getBusinessIdsForProvinceScope(
-  supabase: Awaited<ReturnType<typeof createCatalogClient>>,
+  supabase: CatalogClient,
   scope: { provinceId: string; cityIds: string[] }
 ): Promise<string[]> {
   const { provinceId, cityIds } = scope;
@@ -287,8 +334,7 @@ export async function getBusinessBySlug(slug: string): Promise<Business | null> 
       *,
       province:provinces(*),
       city:cities(*),
-      suburb:suburbs(*),
-      categories:business_categories(category:categories(*))
+      suburb:suburbs(*)
     `)
     .eq("slug", slug)
     .eq("status", "approved")
@@ -303,22 +349,15 @@ export async function getBusinessBySlug(slug: string): Promise<Business | null> 
 
   if (!data) return null;
 
-  return {
-    ...data,
-    categories: data.categories?.map((bc: { category: Category }) => bc.category) ?? [],
-  };
+  const [withCategories] = await attachCategoriesToBusinesses(supabase, [data as Business]);
+  return withCategories ?? null;
 }
 
 export async function getFeaturedBusinesses(): Promise<Business[]> {
   const supabase = await createCatalogClient();
   const { data, error } = await supabase
     .from("businesses")
-    .select(`
-      *,
-      province:provinces(*),
-      city:cities(*),
-      categories:business_categories(category:categories(*))
-    `)
+    .select(BUSINESS_LIST_SELECT)
     .eq("status", "approved")
     .in("membership_tier", ["professional", "enterprise"])
     .order("biz_trust_score", { ascending: false })
@@ -329,19 +368,13 @@ export async function getFeaturedBusinesses(): Promise<Business[]> {
     return [];
   }
 
-  return (data ?? [])
-    .map((business) => ({
-      ...business,
-      categories:
-        business.categories?.map(
-          (entry: { category: Category }) => entry.category
-        ) ?? [],
-    }))
-    .sort((a, b) => {
-      const tierRank = { enterprise: 2, professional: 1 } as const;
-      return tierRank[b.membership_tier as keyof typeof tierRank] -
-        tierRank[a.membership_tier as keyof typeof tierRank];
-    });
+  const businesses = await attachCategoriesToBusinesses(supabase, (data ?? []) as Business[]);
+
+  return businesses.sort((a, b) => {
+    const tierRank = { enterprise: 2, professional: 1 } as const;
+    return tierRank[b.membership_tier as keyof typeof tierRank] -
+      tierRank[a.membership_tier as keyof typeof tierRank];
+  });
 }
 
 export async function getLatestSpecials(limit = 6): Promise<Special[]> {
