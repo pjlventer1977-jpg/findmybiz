@@ -6,6 +6,8 @@ export const metadata = {
   description: "Search for verified businesses across South Africa by name, category, or location.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function SearchPage({
   searchParams,
 }: {
