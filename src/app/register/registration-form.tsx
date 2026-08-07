@@ -8,11 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
-import { CategoryMultiSelect } from "@/components/categories/category-multi-select";
-import {
-  ServiceAreasSelect,
-  type ServiceAreaSelection,
-} from "@/components/business/service-areas-select";
 import {
   getPromoPrice,
   LAUNCH_PROMO_LABEL,
@@ -21,47 +16,24 @@ import {
 import { MEMBERSHIP_PLANS } from "@/constants/membership";
 import { formatCurrency } from "@/lib/utils";
 import { registerBusinessAccount } from "./actions";
-import type { Category, Province } from "@/types";
 
 type BusinessRegistrationFormProps = {
   launchPromoEnabled?: boolean;
-  provinces: Province[];
-  categories: Category[];
 };
 
 export function BusinessRegistrationForm({
   launchPromoEnabled = false,
-  provinces,
-  categories,
 }: BusinessRegistrationFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedTier, setSelectedTier] = useState("free");
-  const [categoryIds, setCategoryIds] = useState<string[]>([]);
-  const [serviceAreas, setServiceAreas] = useState<ServiceAreaSelection[]>([]);
-  const [wholeProvinceIds, setWholeProvinceIds] = useState<string[]>([]);
-  const [primaryCityId, setPrimaryCityId] = useState("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setError(null);
-
-    if (categoryIds.length === 0) {
-      setError("Please select at least one service subcategory.");
-      setLoading(false);
-      return;
-    }
-
-    if ((serviceAreas.length === 0 && wholeProvinceIds.length === 0) || !primaryCityId) {
-      setError(
-        "Please add at least one city/town or whole province, and choose a primary base city."
-      );
-      setLoading(false);
-      return;
-    }
 
     const formData = new FormData(event.currentTarget);
     const result = await registerBusinessAccount({
@@ -71,10 +43,6 @@ export function BusinessRegistrationForm({
       email: String(formData.get("email") ?? ""),
       password: String(formData.get("password") ?? ""),
       selectedTier: selectedTier as "free" | "starter" | "professional" | "enterprise",
-      categoryIds,
-      serviceCityIds: serviceAreas.map((a) => a.cityId),
-      wholeProvinceIds,
-      primaryCityId,
     });
 
     if (!result.ok) {
@@ -103,8 +71,8 @@ export function BusinessRegistrationForm({
       <CardHeader className="pb-3">
         <CardTitle className="text-2xl text-sa-blue">Create your business account</CardTitle>
         <p className="text-sm leading-relaxed text-slate-600">
-          Tell us what you do and where you work. You can refine your listing from your profile
-          after signing up.
+          Create your account in a minute. You&apos;ll add your service categories and areas
+          from your profile next — that&apos;s what customers use to find you.
         </p>
       </CardHeader>
       <CardContent>
@@ -161,28 +129,6 @@ export function BusinessRegistrationForm({
               <LockKeyhole className="h-3.5 w-3.5 text-sa-green" aria-hidden />
               Use at least 6 characters.
             </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-            <CategoryMultiSelect
-              categories={categories}
-              value={categoryIds}
-              onChange={setCategoryIds}
-              required
-            />
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-            <ServiceAreasSelect
-              provinces={provinces}
-              value={serviceAreas}
-              onChange={setServiceAreas}
-              wholeProvinceIds={wholeProvinceIds}
-              onWholeProvincesChange={setWholeProvinceIds}
-              primaryCityId={primaryCityId}
-              onPrimaryChange={setPrimaryCityId}
-              required
-            />
           </div>
 
           <fieldset className="space-y-2">
@@ -256,13 +202,13 @@ export function BusinessRegistrationForm({
             className="h-11 w-full rounded-lg bg-sa-gold text-sm font-semibold text-slate-900 hover:bg-sa-gold/90"
             disabled={loading}
           >
-            {loading ? "Creating your account..." : "Create Account & Register Business"}
+            {loading ? "Creating your account..." : "Create Account"}
           </Button>
         </form>
 
         <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-xs text-slate-500">
           <CheckCircle2 className="h-3.5 w-3.5 text-sa-green" aria-hidden />
-          Your business will be submitted for review after registration.
+          Next: add categories and service areas in your profile so we can approve your listing.
         </p>
       </CardContent>
     </Card>

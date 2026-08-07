@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { CheckCircle2, Circle } from "lucide-react";
 import { ProfileForm } from "./profile-form";
+import { ProfileCompletionPrompt } from "./profile-completion-prompt";
 import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
 import { getCategoryTree, getProvinces } from "@/lib/queries/public";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,6 +86,9 @@ export default async function DashboardProfilePage() {
   }
 
   const readiness = getProfileCompleteness(business, primaryCategoryId);
+  const needsCategories = categoryIds.length === 0;
+  const needsServiceAreas =
+    (serviceAreas.length === 0 && wholeProvinceIds.length === 0) || !business.city_id;
   const hasDocument = (type: "proof_of_address" | "id_document") =>
     documents.some((document) => document.document_type === type);
   const readinessItems = [
@@ -99,6 +104,12 @@ export default async function DashboardProfilePage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Profile Management</h1>
+      <Suspense fallback={null}>
+        <ProfileCompletionPrompt
+          needsCategories={needsCategories}
+          needsServiceAreas={needsServiceAreas}
+        />
+      </Suspense>
       <Card>
         <CardHeader>
           <CardTitle>Listing readiness</CardTitle>
