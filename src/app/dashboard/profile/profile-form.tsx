@@ -187,13 +187,13 @@ export function ProfileForm({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="listing-details" className="scroll-mt-24">
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
           <p className="text-sm text-muted-foreground">
             {adminMode
               ? "Admin edits update the live listing immediately."
-              : "Add the details customers need to find and contact your business."}
+              : "Add the details customers need to find and contact your business. Service categories and areas are required before we can approve your listing."}
           </p>
         </CardHeader>
         <CardContent>
@@ -248,23 +248,27 @@ export function ProfileForm({
               </div>
             </div>
 
-            <CategoryMultiSelect
-              categories={categories}
-              value={categoryIds}
-              onChange={setCategoryIds}
-              required
-            />
+            <div id="service-categories" className="scroll-mt-24 space-y-2">
+              <CategoryMultiSelect
+                categories={categories}
+                value={categoryIds}
+                onChange={setCategoryIds}
+                required
+              />
+            </div>
 
-            <ServiceAreasSelect
-              provinces={provinces}
-              value={serviceAreas}
-              onChange={setServiceAreas}
-              wholeProvinceIds={wholeProvinceIds}
-              onWholeProvincesChange={setWholeProvinceIds}
-              primaryCityId={primaryCityId}
-              onPrimaryChange={setPrimaryCityId}
-              required
-            />
+            <div id="service-areas" className="scroll-mt-24 space-y-2">
+              <ServiceAreasSelect
+                provinces={provinces}
+                value={serviceAreas}
+                onChange={setServiceAreas}
+                wholeProvinceIds={wholeProvinceIds}
+                onWholeProvincesChange={setWholeProvinceIds}
+                primaryCityId={primaryCityId}
+                onPrimaryChange={setPrimaryCityId}
+                required
+              />
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="website">Website URL</Label>
