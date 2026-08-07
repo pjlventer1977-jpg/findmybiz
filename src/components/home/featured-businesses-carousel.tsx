@@ -29,7 +29,7 @@ export function FeaturedBusinessesCarousel({ businesses }: { businesses: Busines
         {businesses.map((business) => (
           <div
             key={business.id}
-            className="w-[min(295px,84vw)] shrink-0 snap-start sm:w-[280px] lg:w-[calc((100%-2.5rem)/3)]"
+            className="w-[min(240px,84vw)] shrink-0 snap-start sm:w-[220px] lg:w-[calc((100%-2.5rem)/4)]"
           >
             <BusinessCard
               business={business}

@@ -32,11 +32,16 @@ export function BusinessCard({
   const category = business.categories?.[0]?.name ?? "Local Business";
   const showPremium = business.is_featured || business.membership_tier !== "free";
   const isFeatured = variant === "featured";
+  const isCompactFeatured = compact && isFeatured;
+  const logoBoxSize = isCompactFeatured ? 48 : 64;
+  const actionButtonSize = isCompactFeatured ? "h-7 w-7" : "h-8 w-8";
+  const actionIconSize = isCompactFeatured ? "h-3.5 w-3.5" : "h-4 w-4";
 
   return (
     <article
       className={cn(
-        "group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+        "group overflow-hidden border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+        isCompactFeatured ? "rounded-xl" : "rounded-2xl",
         "relative",
         isFeatured &&
           "border-sa-gold/30 ring-1 ring-sa-gold/40 shadow-md hover:-translate-y-1 hover:shadow-xl",
@@ -44,65 +49,82 @@ export function BusinessCard({
       )}
     >
       <Link href={`/business/${business.slug}`} className="block">
-        <div
-          className={cn(
-            "relative",
-            isFeatured
-              ? "border-b border-slate-100 bg-white"
-              : "bg-gradient-to-br from-sa-blue via-sa-green to-sa-blue/80",
-            compact ? (isFeatured ? "h-32" : "h-24") : isFeatured ? "h-36" : "h-32"
-          )}
-        >
-          {business.logo_url && (
-            <Image
-              src={business.logo_url}
-              alt=""
-              fill
-              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
+        {isFeatured ? (
+          <div
+            className={cn(
+              "relative flex items-center justify-center border-b border-slate-100 bg-slate-50",
+              isCompactFeatured ? "h-[4.75rem]" : "h-24"
+            )}
+          >
+            <div
               className={cn(
-                isFeatured
-                  ? "object-contain object-center p-5"
-                  : "object-cover opacity-35"
+                "relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-100",
+                isCompactFeatured ? "h-12 w-12" : "h-16 w-16"
               )}
-            />
-          )}
-          {isFeatured && !business.logo_url && (
-            <span className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-sa-green">
-              {business.name.charAt(0)}
-            </span>
-          )}
-          <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-            {showPremium && !isFeatured && (
-              <span
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase text-slate-900 shadow-sm",
-                  isFeatured ? "bg-gradient-to-r from-sa-gold to-amber-300" : "bg-sa-gold"
-                )}
-              >
-                Premium
-              </span>
-            )}
-            {business.is_verified && !isFeatured && (
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase shadow-sm",
-                  isFeatured
-                    ? "bg-sa-green text-white"
-                    : "bg-white/95 text-sa-green"
-                )}
-              >
-                <BadgeCheck className="h-3 w-3" />
-                Verified
-              </span>
-            )}
+            >
+              {business.logo_url ? (
+                <Image
+                  src={business.logo_url}
+                  alt=""
+                  width={logoBoxSize}
+                  height={logoBoxSize}
+                  className="h-full w-full object-contain p-1.5"
+                />
+              ) : (
+                <span
+                  className={cn(
+                    "font-bold text-sa-green",
+                    isCompactFeatured ? "text-lg" : "text-xl"
+                  )}
+                >
+                  {business.name.charAt(0)}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div
+            className={cn(
+              "relative bg-gradient-to-br from-sa-blue via-sa-green to-sa-blue/80",
+              compact ? "h-24" : "h-32"
+            )}
+          >
+            {business.logo_url && (
+              <Image
+                src={business.logo_url}
+                alt=""
+                fill
+                sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
+                className="object-cover opacity-35"
+              />
+            )}
+            <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+              {showPremium && (
+                <span className="rounded-full bg-sa-gold px-2 py-0.5 text-[9px] font-bold uppercase text-slate-900 shadow-sm">
+                  Premium
+                </span>
+              )}
+              {business.is_verified && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[9px] font-bold uppercase text-sa-green shadow-sm">
+                  <BadgeCheck className="h-3 w-3" />
+                  Verified
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </Link>
 
       <div
         className={cn(
           "relative",
-          isFeatured ? (compact ? "p-3" : "p-4") : compact ? "p-3 pt-7" : "p-4 pt-8"
+          isFeatured
+            ? isCompactFeatured
+              ? "p-2.5"
+              : "p-4"
+            : compact
+              ? "p-3 pt-7"
+              : "p-4 pt-8"
         )}
       >
         {!isFeatured && (
@@ -143,7 +165,7 @@ export function BusinessCard({
           )}
         </div>
 
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           <StarRating rating={rating} compact />
           <span className="text-[11px] font-semibold text-slate-700">
             {rating.toFixed(1)}
@@ -160,9 +182,9 @@ export function BusinessCard({
         </div>
 
         {location && (
-          <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <MapPin className="h-3.5 w-3.5 shrink-0 text-sa-green" />
-            {location}
+            <span className="truncate">{location}</span>
           </p>
         )}
 
@@ -172,18 +194,31 @@ export function BusinessCard({
           </div>
         )}
 
-        <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3">
+        <div
+          className={cn(
+            "flex items-center gap-2 border-t border-slate-100 pt-2.5",
+            isCompactFeatured ? "mt-2" : "mt-3"
+          )}
+        >
           {business.phone ? (
             <a
               href={`tel:${business.phone}`}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-sa-green transition-colors hover:border-sa-green hover:bg-sa-green/5"
+              className={cn(
+                "flex items-center justify-center rounded-lg border border-slate-200 text-sa-green transition-colors hover:border-sa-green hover:bg-sa-green/5",
+                actionButtonSize
+              )}
               aria-label="Call"
             >
-              <Phone className="h-4 w-4" />
+              <Phone className={actionIconSize} />
             </a>
           ) : (
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-100 text-slate-300">
-              <Phone className="h-4 w-4" />
+            <span
+              className={cn(
+                "flex items-center justify-center rounded-lg border border-slate-100 text-slate-300",
+                actionButtonSize
+              )}
+            >
+              <Phone className={actionIconSize} />
             </span>
           )}
           {business.whatsapp || business.phone ? (
@@ -194,14 +229,22 @@ export function BusinessCard({
               )}
               target="_blank"
               rel="noreferrer"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-sa-green transition-colors hover:border-sa-green hover:bg-sa-green/5"
+              className={cn(
+                "flex items-center justify-center rounded-lg border border-slate-200 text-sa-green transition-colors hover:border-sa-green hover:bg-sa-green/5",
+                actionButtonSize
+              )}
               aria-label="WhatsApp"
             >
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle className={actionIconSize} />
             </a>
           ) : (
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-100 text-slate-300">
-              <MessageCircle className="h-4 w-4" />
+            <span
+              className={cn(
+                "flex items-center justify-center rounded-lg border border-slate-100 text-slate-300",
+                actionButtonSize
+              )}
+            >
+              <MessageCircle className={actionIconSize} />
             </span>
           )}
           {business.website ? (
@@ -209,24 +252,35 @@ export function BusinessCard({
               href={business.website}
               target="_blank"
               rel="noreferrer"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-sa-green transition-colors hover:border-sa-green hover:bg-sa-green/5"
+              className={cn(
+                "flex items-center justify-center rounded-lg border border-slate-200 text-sa-green transition-colors hover:border-sa-green hover:bg-sa-green/5",
+                actionButtonSize
+              )}
               aria-label="Website"
             >
-              <Globe className="h-4 w-4" />
+              <Globe className={actionIconSize} />
             </a>
           ) : (
             <Link
               href={`/business/${business.slug}`}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-sa-green transition-colors hover:border-sa-green hover:bg-sa-green/5"
+              className={cn(
+                "flex items-center justify-center rounded-lg border border-slate-200 text-sa-green transition-colors hover:border-sa-green hover:bg-sa-green/5",
+                actionButtonSize
+              )}
               aria-label="Profile"
             >
-              <Globe className="h-4 w-4" />
+              <Globe className={actionIconSize} />
             </Link>
           )}
         </div>
       </div>
       {isFeatured && business.is_verified && (
-        <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-sa-green px-2 py-1 text-[9px] font-bold uppercase text-white shadow-sm">
+        <span
+          className={cn(
+            "absolute inline-flex items-center gap-1 rounded-full bg-sa-green px-2 py-1 text-[9px] font-bold uppercase text-white shadow-sm",
+            isCompactFeatured ? "bottom-2 right-2" : "bottom-3 right-3"
+          )}
+        >
           <BadgeCheck className="h-3 w-3" />
           Verified
         </span>
