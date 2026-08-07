@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, LockKeyhole } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,7 @@ export function BusinessRegistrationForm({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [selectedTier, setSelectedTier] = useState("free");
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [serviceAreas, setServiceAreas] = useState<ServiceAreaSelection[]>([]);
@@ -133,15 +134,29 @@ export function BusinessRegistrationForm({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="password">Create Password *</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              minLength={6}
-              required
-              className="h-11 rounded-lg"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                minLength={6}
+                required
+                className="h-11 rounded-lg pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-slate-700"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" aria-hidden />
+                ) : (
+                  <Eye className="h-4 w-4" aria-hidden />
+                )}
+              </button>
+            </div>
             <p className="flex items-center gap-1.5 text-xs text-slate-500">
               <LockKeyhole className="h-3.5 w-3.5 text-sa-green" aria-hidden />
               Use at least 6 characters.
