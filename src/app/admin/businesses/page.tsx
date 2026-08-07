@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 const STATUS_FILTERS: { value: AdminBusinessStatus; label: string }[] = [
   { value: "all", label: "All" },
   { value: "pending", label: "Pending" },
