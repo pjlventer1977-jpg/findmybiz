@@ -36,6 +36,10 @@ interface ProfileFormProps {
   categoryIds: string[];
   serviceAreas: ServiceAreaSelection[];
   wholeProvinceIds: string[];
+  /** Override default owner profile API (used by admin edit). */
+  saveUrl?: string;
+  allowNameEdit?: boolean;
+  adminMode?: boolean;
 }
 
 export function ProfileForm({
@@ -46,8 +50,12 @@ export function ProfileForm({
   categoryIds: initialCategoryIds,
   serviceAreas: initialServiceAreas,
   wholeProvinceIds: initialWholeProvinceIds,
+  saveUrl,
+  allowNameEdit = false,
+  adminMode = false,
 }: ProfileFormProps) {
   const router = useRouter();
+  const [name, setName] = useState(business.name);
   const [description, setDescription] = useState(business.description ?? "");
   const [phone, setPhone] = useState(business.phone);
   const [email, setEmail] = useState(business.email);
@@ -94,21 +102,25 @@ export function ProfileForm({
 
       const primary = serviceAreas.find((a) => a.cityId === primaryCityId);
 
-      const res = await fetch(`/api/businesses/${business.id}/profile`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          description,
-          phone,
-          email,
-          website,
-          provinceId: primary?.provinceId ?? null,
-          cityId: primaryCityId,
-          categoryIds,
-          serviceCityIds: serviceAreas.map((a) => a.cityId),
-          wholeProvinceIds,
-        }),
-      });
+      const res = await fetch(
+        saveUrl ?? `/api/businesses/${business.id}/profile`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...(allowNameEdit ? { name: name.trim() } : {}),
+            description,
+            phone,
+            email,
+            website,
+            provinceId: primary?.provinceId ?? null,
+            cityId: primaryCityId,
+            categoryIds,
+            serviceCityIds: serviceAreas.map((a) => a.cityId),
+            wholeProvinceIds,
+          }),
+        }
+      );
 
       const data = await res.json();
 
@@ -179,16 +191,27 @@ export function ProfileForm({
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Add the details customers need to find and contact your business.
+            {adminMode
+              ? "Admin edits update the live listing immediately."
+              : "Add the details customers need to find and contact your business."}
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="business-name">Business Name</Label>
-              <p id="business-name" className="text-sm">
-                {business.name}
-              </p>
+              {allowNameEdit ? (
+                <Input
+                  id="business-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              ) : (
+                <p id="business-name" className="text-sm">
+                  {business.name}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

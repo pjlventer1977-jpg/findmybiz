@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -109,7 +110,7 @@ export function AdminBusinessActions({
 
   async function handleDelete() {
     const typed = window.prompt(
-      `Permanently delete "${businessName}" and the owner login?\n\nType the business name to confirm:`
+      `Permanently delete "${businessName}" and the owner login?\n\nAny active PayFast subscription will be cancelled first.\n\nType the business name to confirm:`
     );
     if (typed == null) return;
     if (typed.trim().toLowerCase() !== businessName.trim().toLowerCase()) {
@@ -118,7 +119,7 @@ export function AdminBusinessActions({
     }
 
     const confirmed = window.confirm(
-      `This cannot be undone.\n\nDelete business "${businessName}" and remove the owner account?`
+      `This cannot be undone.\n\nDelete business "${businessName}", cancel any paid subscription, and remove the owner account?`
     );
     if (!confirmed) return;
 
@@ -141,8 +142,8 @@ export function AdminBusinessActions({
       } else {
         setNotice(
           data.user_deleted
-            ? "Business and owner account deleted."
-            : "Business deleted (owner kept — other listings remain)."
+            ? "Business deleted, subscription cancelled, and owner account removed."
+            : "Business deleted and subscription cancelled (owner kept — other listings remain)."
         );
       }
       router.refresh();
@@ -156,6 +157,10 @@ export function AdminBusinessActions({
   return (
     <div className={`flex flex-col gap-2 ${compact ? "items-stretch" : "items-end"}`}>
       <div className={`flex flex-wrap gap-2 ${compact ? "" : "justify-end"}`}>
+        <Button asChild size="sm" variant="outline" disabled={!!loading}>
+          <Link href={`/admin/businesses/${businessId}/edit`}>Edit</Link>
+        </Button>
+
         {isPending && (
           <>
             <Button
@@ -211,7 +216,7 @@ export function AdminBusinessActions({
             onClick={() => {
               if (
                 window.confirm(
-                  `Suspend "${businessName}"?\n\nListing will be hidden and any paid plan cancelled.`
+                  `Suspend "${businessName}"?\n\nListing will be hidden and any paid PayFast subscription will be cancelled.`
                 )
               ) {
                 void handleAction("suspended");

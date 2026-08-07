@@ -361,6 +361,7 @@ export async function DELETE(
         {
           success: true,
           business_deleted: true,
+          subscription_cancelled: cancelResult.cancelled,
           user_deleted: false,
           warning: `Business removed, but owner account could not be deleted: ${deleteUserError.message}`,
         },
@@ -373,6 +374,7 @@ export async function DELETE(
   return NextResponse.json({
     success: true,
     business_deleted: true,
+    subscription_cancelled: cancelResult.cancelled,
     user_deleted: userDeleted,
   });
 }
