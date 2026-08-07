@@ -4,12 +4,15 @@ import { Suspense, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Check, Mail } from "lucide-react";
+import { Check, Eye, EyeOff, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { getCanonicalAppUrl } from "@/lib/app-url";
 import { HERO_BACKGROUND_IMAGE } from "@/data/homepage";
+
+type FormMode = "sign-in" | "forgot-password";
 
 const OWNER_BULLETS = [
   "Leads delivered to your business email",
@@ -19,20 +22,42 @@ const OWNER_BULLETS = [
 
 function LoginForm() {
   const searchParams = useSearchParams();
+  const [mode, setMode] = useState<FormMode>("sign-in");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setMessage(null);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
     const supabase = createClient();
 
     try {
+      if (mode === "forgot-password") {
+        const redirectTo = `${getCanonicalAppUrl()}/auth/callback?next=/reset-password`;
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo,
+        });
+        if (resetError) {
+          setError(resetError.message);
+          setLoading(false);
+          return;
+        }
+
+        setMessage(
+          "If an account exists for that email, we sent a password reset link. Check your inbox."
+        );
+        setLoading(false);
+        return;
+      }
+
+      const password = formData.get("password") as string;
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -57,9 +82,20 @@ function LoginForm() {
       // Full navigation ensures auth cookies are sent to middleware/server
       window.location.assign(safeRedirect);
     } catch {
-      setError("Sign in failed. Please check your connection and try again.");
+      setError(
+        mode === "forgot-password"
+          ? "Could not send the reset email. Please check your connection and try again."
+          : "Sign in failed. Please check your connection and try again."
+      );
       setLoading(false);
     }
+  }
+
+  function switchMode(nextMode: FormMode) {
+    setMode(nextMode);
+    setError(null);
+    setMessage(null);
+    setShowPassword(false);
   }
 
   return (
@@ -122,10 +158,12 @@ function LoginForm() {
         <div className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-lg backdrop-blur-sm sm:p-8">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-sa-blue">
-              Sign In
+              {mode === "sign-in" ? "Sign In" : "Reset password"}
             </h2>
             <p className="mt-1.5 text-sm text-slate-600">
-              Enter your details to access your dashboard.
+              {mode === "sign-in"
+                ? "Enter your details to access your dashboard."
+                : "Enter your email and we will send you a reset link."}
             </p>
           </div>
 
@@ -141,26 +179,65 @@ function LoginForm() {
                 className="h-11 rounded-lg"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                minLength={6}
-                autoComplete="current-password"
-                className="h-11 rounded-lg"
-              />
-            </div>
+            {mode === "sign-in" && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="password">Password</Label>
+                  <button
+                    type="button"
+                    onClick={() => switchMode("forgot-password")}
+                    className="text-sm font-medium text-sa-green transition-colors hover:text-sa-blue"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={6}
+                    autoComplete="current-password"
+                    className="h-11 rounded-lg pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-slate-700"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" aria-hidden />
+                    ) : (
+                      <Eye className="h-4 w-4" aria-hidden />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
             {error && <p className="text-sm text-destructive">{error}</p>}
+            {message && <p className="text-sm text-sa-green">{message}</p>}
             <Button
               type="submit"
               className="h-11 w-full rounded-lg bg-sa-gold text-sm font-semibold text-slate-900 shadow-sm hover:bg-sa-gold/90"
               disabled={loading}
             >
-              {loading ? "Please wait..." : "Sign In"}
+              {loading
+                ? "Please wait..."
+                : mode === "sign-in"
+                  ? "Sign In"
+                  : "Send reset link"}
             </Button>
+            {mode === "forgot-password" && (
+              <button
+                type="button"
+                onClick={() => switchMode("sign-in")}
+                className="w-full text-center text-sm font-medium text-slate-600 transition-colors hover:text-sa-blue"
+              >
+                Back to sign in
+              </button>
+            )}
           </form>
 
           <p className="mt-5 text-center text-sm text-slate-600">
