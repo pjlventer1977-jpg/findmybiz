@@ -27,13 +27,15 @@ export function BusinessCard({
   variant = "default",
 }: BusinessCardProps) {
   const trust = getTrustBadgeLabel(business.biz_trust_score);
-  const rating = Math.max(3.8, Math.min(5, business.biz_trust_score / 20));
+  const reviewCount = business.approved_review_count ?? 0;
+  const hasReviews = reviewCount > 0;
+  const rating = business.average_review_rating ?? 0;
   const location = [business.city?.name, business.province?.name].filter(Boolean).join(", ");
   const category = business.categories?.[0]?.name ?? "Local Business";
   const showPremium = business.is_featured || business.membership_tier !== "free";
   const isFeatured = variant === "featured";
   const isCompactFeatured = compact && isFeatured;
-  const logoBoxSize = isCompactFeatured ? 48 : 64;
+  const logoBoxSize = isCompactFeatured ? 80 : 96;
   const actionButtonSize = isCompactFeatured ? "h-7 w-7" : "h-8 w-8";
   const actionIconSize = isCompactFeatured ? "h-3.5 w-3.5" : "h-4 w-4";
 
@@ -53,13 +55,13 @@ export function BusinessCard({
           <div
             className={cn(
               "relative flex items-center justify-center border-b border-slate-100 bg-slate-50",
-              isCompactFeatured ? "h-[4.75rem]" : "h-24"
+              isCompactFeatured ? "h-28" : "h-32"
             )}
           >
             <div
               className={cn(
-                "relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-100",
-                isCompactFeatured ? "h-12 w-12" : "h-16 w-16"
+                "relative flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-100",
+                isCompactFeatured ? "h-20 w-20" : "h-24 w-24"
               )}
             >
               {business.logo_url ? (
@@ -68,13 +70,13 @@ export function BusinessCard({
                   alt=""
                   width={logoBoxSize}
                   height={logoBoxSize}
-                  className="h-full w-full object-contain p-1.5"
+                  className="h-full w-full object-contain p-2"
                 />
               ) : (
                 <span
                   className={cn(
                     "font-bold text-sa-green",
-                    isCompactFeatured ? "text-lg" : "text-xl"
+                    isCompactFeatured ? "text-2xl" : "text-3xl"
                   )}
                 >
                   {business.name.charAt(0)}
@@ -165,21 +167,25 @@ export function BusinessCard({
           )}
         </div>
 
-        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-          <StarRating rating={rating} compact />
-          <span className="text-[11px] font-semibold text-slate-700">
-            {rating.toFixed(1)}
-          </span>
-          <span
-            className={cn(
-              "rounded-full px-2 py-0.5 text-[10px] font-semibold text-white",
-              trust.color,
-              compact && "hidden sm:inline-flex"
-            )}
-          >
-            {trust.label}
-          </span>
-        </div>
+        {hasReviews ? (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <StarRating rating={rating} compact count={reviewCount} />
+            <span className="text-[11px] font-semibold text-slate-700">
+              {rating.toFixed(1)}
+            </span>
+          </div>
+        ) : (
+          <div className="mt-1.5">
+            <span
+              className={cn(
+                "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold text-white",
+                trust.color
+              )}
+            >
+              {trust.label}
+            </span>
+          </div>
+        )}
 
         {location && (
           <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">

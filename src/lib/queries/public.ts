@@ -207,6 +207,52 @@ async function attachCategoriesToBusinesses(
   }));
 }
 
+async function attachReviewSummariesToBusinesses(
+  supabase: CatalogClient,
+  businesses: Business[]
+): Promise<Business[]> {
+  if (businesses.length === 0) return [];
+
+  const { data: reviews, error } = await supabase
+    .from("reviews")
+    .select("business_id, rating")
+    .in(
+      "business_id",
+      businesses.map((business) => business.id)
+    )
+    .eq("status", "approved");
+
+  if (error) {
+    console.error("attachReviewSummariesToBusinesses failed:", error.message);
+    return businesses;
+  }
+
+  const totals = new Map<string, { count: number; sum: number }>();
+  for (const review of reviews ?? []) {
+    const current = totals.get(review.business_id) ?? { count: 0, sum: 0 };
+    current.count += 1;
+    current.sum += review.rating;
+    totals.set(review.business_id, current);
+  }
+
+  return businesses.map((business) => {
+    const summary = totals.get(business.id);
+    if (!summary || summary.count === 0) {
+      return {
+        ...business,
+        approved_review_count: 0,
+        average_review_rating: undefined,
+      };
+    }
+
+    return {
+      ...business,
+      approved_review_count: summary.count,
+      average_review_rating: summary.sum / summary.count,
+    };
+  });
+}
+
 async function attachLocationsToBusinesses(
   supabase: CatalogClient,
   businesses: Business[]
@@ -246,7 +292,8 @@ async function hydrateBusinessList(
   businesses: Business[]
 ): Promise<Business[]> {
   const withLocations = await attachLocationsToBusinesses(supabase, businesses);
-  return attachCategoriesToBusinesses(supabase, withLocations);
+  const withCategories = await attachCategoriesToBusinesses(supabase, withLocations);
+  return attachReviewSummariesToBusinesses(supabase, withCategories);
 }
 
 export async function searchBusinesses(params: {
