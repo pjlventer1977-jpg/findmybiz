@@ -274,6 +274,11 @@ export function BillingClient({
         </section>
       )}
 
+      <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        Your card statement may show <strong className="font-semibold text-slate-800">TECH-SMART</strong>{" "}
+        as the payment recipient for Find My Biz memberships and purchases.
+      </p>
+
       <section>
         <h2 className="text-xl font-semibold mb-4">Membership Plans</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
