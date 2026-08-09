@@ -419,6 +419,100 @@ export async function sendSubscriptionPaymentOwnerEmail(payload: {
   });
 }
 
+export async function sendSubscriptionRenewalOwnerEmail(payload: {
+  businessName: string;
+  businessEmail: string;
+  contactPerson?: string | null;
+  tier: MembershipTier;
+  amount: number;
+  periodEnd: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const plan = getPlanByTier(payload.tier);
+  const billingUrl = `${getAppUrl()}/dashboard/billing`;
+  const periodEndLabel = new Date(payload.periodEnd).toLocaleDateString("en-ZA", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  return sendBusinessEmail({
+    to: payload.businessEmail,
+    subject: `Payment received — your ${plan.name} plan renewed`,
+    text: [
+      `Hi ${payload.contactPerson || payload.businessName},`,
+      "",
+      `Payment of R${payload.amount.toFixed(2)} received. Your ${plan.name} membership on Find My Biz has been renewed.`,
+      `Your next billing period runs until ${periodEndLabel}.`,
+      "",
+      "Your card statement may show TECH-SMART as the payment recipient.",
+      "",
+      `Billing: ${billingUrl}`,
+    ].join("\n"),
+    html: `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #007A4D; color: white; padding: 20px; border-radius: 8px 8px 0 0;"><h1 style="margin: 0; font-size: 22px;">Payment Received</h1></div>
+  <div style="border: 1px solid #e5e5e5; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+    <p>Hi ${escapeHtml(payload.contactPerson || payload.businessName)},</p>
+    <p>Payment of <strong>R${payload.amount.toFixed(2)}</strong> received. Your <strong>${escapeHtml(plan.name)}</strong> membership on Find My Biz has been renewed.</p>
+    <p>Your next billing period runs until <strong>${escapeHtml(periodEndLabel)}</strong>.</p>
+    <p style="font-size: 13px; color: #64748b;">Your card statement may show TECH-SMART as the payment recipient.</p>
+    <div style="text-align: center; margin-top: 24px;"><a href="${billingUrl}" style="display: inline-block; background: #007A4D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Billing</a></div>
+  </div>
+</body></html>`,
+  });
+}
+
+export async function sendSubscriptionRenewalAdminEmail(payload: {
+  businessId: string;
+  businessName: string;
+  businessEmail: string;
+  contactPerson?: string | null;
+  tier: MembershipTier;
+  amount: number;
+  payfastPaymentId: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const plan = getPlanByTier(payload.tier);
+  const adminUrl = `${getAppUrl()}/admin/businesses`;
+  const contact = payload.contactPerson || "Not provided";
+
+  return sendBusinessEmail({
+    to: getAdminEmail(),
+    subject: `Subscription renewed: ${payload.businessName}`,
+    text: [
+      "PayFast renewal status: Successful (COMPLETE)",
+      "",
+      `Business: ${payload.businessName}`,
+      `Contact person: ${contact}`,
+      `Email: ${payload.businessEmail}`,
+      `Plan: ${plan.name}`,
+      `Amount: R${payload.amount.toFixed(2)}`,
+      `PayFast payment ID: ${payload.payfastPaymentId}`,
+      "",
+      `Review business: ${adminUrl}`,
+    ].join("\n"),
+    html: `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #007A4D; color: white; padding: 20px; border-radius: 8px 8px 0 0;"><h1 style="margin: 0; font-size: 22px;">Subscription Renewed</h1></div>
+  <div style="border: 1px solid #e5e5e5; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+    <p>PayFast renewal status: <strong>Successful (COMPLETE)</strong></p>
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr><td style="padding: 8px 0; font-weight: bold; width: 150px;">Business</td><td>${escapeHtml(payload.businessName)}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">Contact person</td><td>${escapeHtml(contact)}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">Email</td><td>${escapeHtml(payload.businessEmail)}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">Plan</td><td>${escapeHtml(plan.name)}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">Amount</td><td>R${payload.amount.toFixed(2)}</td></tr>
+      <tr><td style="padding: 8px 0; font-weight: bold;">PayFast ID</td><td>${escapeHtml(payload.payfastPaymentId)}</td></tr>
+    </table>
+    <div style="text-align: center; margin-top: 24px;"><a href="${adminUrl}" style="display: inline-block; background: #007A4D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Review in Admin</a></div>
+  </div>
+</body></html>`,
+  });
+}
+
 export async function sendSubscriptionPaymentFailedOwnerEmail(payload: {
   businessName: string;
   businessEmail: string;

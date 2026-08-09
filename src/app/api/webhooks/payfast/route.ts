@@ -14,6 +14,8 @@ import {
   sendSubscriptionPaymentAdminEmail,
   sendSubscriptionPaymentOwnerEmail,
   sendSubscriptionPaymentFailedOwnerEmail,
+  sendSubscriptionRenewalAdminEmail,
+  sendSubscriptionRenewalOwnerEmail,
 } from "@/lib/email/business-notifications";
 import {
   extendPeriodEnd,
@@ -387,7 +389,40 @@ async function handleRenewal(
     { onConflict: "business_id" }
   );
 
-  void renewalPayment;
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("id, name, email, contact_person")
+    .eq("id", subscription.business_id)
+    .single();
+
+  if (business) {
+    const ownerEmail = await sendSubscriptionRenewalOwnerEmail({
+      businessName: business.name,
+      businessEmail: business.email,
+      contactPerson: business.contact_person,
+      tier,
+      amount,
+      periodEnd,
+    });
+    const adminEmail = await sendSubscriptionRenewalAdminEmail({
+      businessId: business.id,
+      businessName: business.name,
+      businessEmail: business.email,
+      contactPerson: business.contact_person,
+      tier,
+      amount,
+      payfastPaymentId: postData.pf_payment_id ?? "Not provided",
+    });
+
+    if (!ownerEmail.success || !adminEmail.success) {
+      console.error("Subscription renewal notification failed:", {
+        business_id: subscription.business_id,
+        payment_id: renewalPayment?.id,
+        owner_error: ownerEmail.error,
+        admin_error: adminEmail.error,
+      });
+    }
+  }
 
   return NextResponse.json({ status: "renewed" });
 }
