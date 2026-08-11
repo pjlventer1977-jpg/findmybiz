@@ -8,6 +8,7 @@ import type { Business } from "@/types";
 
 export function FeaturedBusinessesCarousel({ businesses }: { businesses: Business[] }) {
   const carouselRef = useRef<HTMLDivElement>(null);
+  const singleBusiness = businesses.length === 1;
 
   function scroll(direction: "previous" | "next") {
     const carousel = carouselRef.current;
@@ -29,7 +30,11 @@ export function FeaturedBusinessesCarousel({ businesses }: { businesses: Busines
         {businesses.map((business) => (
           <div
             key={business.id}
-            className="w-[min(240px,84vw)] shrink-0 snap-start sm:w-[220px] lg:w-[calc((100%-2.5rem)/4)]"
+            className={
+              singleBusiness
+                ? "w-full max-w-[280px] shrink-0 snap-start"
+                : "w-[min(240px,84vw)] shrink-0 snap-start sm:w-[220px] lg:w-[calc((100%-2.5rem)/4)]"
+            }
           >
             <BusinessCard
               business={business}
@@ -40,14 +45,18 @@ export function FeaturedBusinessesCarousel({ businesses }: { businesses: Busines
           </div>
         ))}
       </div>
-      <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/70 to-transparent"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/70 to-transparent"
-        aria-hidden
-      />
+      {!singleBusiness && (
+        <>
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/70 to-transparent"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/70 to-transparent"
+            aria-hidden
+          />
+        </>
+      )}
 
       {businesses.length > 1 && (
         <div className="mt-1 flex justify-end gap-2">
