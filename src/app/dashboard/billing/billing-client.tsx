@@ -358,7 +358,11 @@ export function BillingClient({
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold mb-4">Lead Credit Packs</h2>
+        <h2 className="text-xl font-semibold mb-2">Lead Credit Packs</h2>
+        <p className="mb-4 text-sm text-slate-600">
+          Purchased credits are valid for <strong>12 months</strong> if unused. Your plan&apos;s
+          monthly lead allowance resets on each billing date and does not carry over.
+        </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {LEAD_CREDIT_PACKS.map((pack) => (
             <Card key={pack.credits}>

@@ -14,7 +14,11 @@ export default function TermsPage() {
           Launch special: qualifying paid plans may be billed at 50% for the first
           3 months, then automatically at the full listed monthly price
         </li>
-        <li>Lead credits are allocated per plan and expire after 12 months for purchased packs</li>
+        <li>
+          Monthly plan lead credits reset on each billing date and do not carry over to the next
+          period
+        </li>
+        <li>Purchased lead credit packs are valid for 12 months from purchase if unused</li>
         <li>You may cancel a paid subscription from Billing; access reverts to the Free plan</li>
         <li>We reserve the right to suspend listings that violate our policies</li>
       </ul>
