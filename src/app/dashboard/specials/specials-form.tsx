@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ImagePlus, Loader2 } from "lucide-react";
+import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPlanByTier } from "@/constants/membership";
@@ -26,6 +26,7 @@ export function SpecialsDashboard({
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -90,6 +91,34 @@ export function SpecialsDashboard({
     }
   }
 
+  async function handleDelete(specialId: string) {
+    if (!confirm("Remove this special? It will no longer appear on your profile or the specials board.")) {
+      return;
+    }
+
+    setDeletingId(specialId);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `/api/specials?specialId=${specialId}&businessId=${businessId}`,
+        { method: "DELETE" }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error ?? "Failed to delete special");
+      }
+
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   if (plan.specialsPerMonth <= 0) {
     return (
       <p className="text-muted-foreground">
@@ -105,7 +134,7 @@ export function SpecialsDashboard({
           {specials.map((special) => (
             <div
               key={special.id}
-              className="overflow-hidden rounded-xl border bg-white shadow-sm"
+              className="group relative overflow-hidden rounded-xl border bg-white shadow-sm"
             >
               {special.image_url ? (
                 <div className="relative aspect-[4/5] w-full">
@@ -123,9 +152,28 @@ export function SpecialsDashboard({
                   Processing...
                 </div>
               )}
+              <Button
+                type="button"
+                size="icon"
+                variant="destructive"
+                className="absolute right-2 top-2 h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                disabled={deletingId === special.id}
+                onClick={() => handleDelete(special.id)}
+                aria-label="Delete special"
+              >
+                {deletingId === special.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
             </div>
           ))}
         </div>
+      )}
+
+      {error && specials.length > 0 && (
+        <p className="text-sm text-destructive">{error}</p>
       )}
 
       <Card>

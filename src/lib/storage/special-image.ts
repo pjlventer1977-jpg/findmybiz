@@ -48,3 +48,28 @@ export async function uploadSpecialImage(
   const { data } = supabase.storage.from(SPECIAL_BUCKET).getPublicUrl(path);
   return `${data.publicUrl}?t=${Date.now()}`;
 }
+
+export function extractSpecialStoragePath(imageUrl: string): string | null {
+  try {
+    const url = new URL(imageUrl);
+    const marker = `/storage/v1/object/public/${SPECIAL_BUCKET}/`;
+    const index = url.pathname.indexOf(marker);
+    if (index === -1) return null;
+    return decodeURIComponent(url.pathname.slice(index + marker.length));
+  } catch {
+    return null;
+  }
+}
+
+export async function deleteSpecialImage(
+  supabase: SupabaseClient,
+  imageUrl: string
+): Promise<void> {
+  const path = extractSpecialStoragePath(imageUrl);
+  if (!path) return;
+
+  const { error } = await supabase.storage.from(SPECIAL_BUCKET).remove([path]);
+  if (error) {
+    throw new Error(error.message);
+  }
+}
