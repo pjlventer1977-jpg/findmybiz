@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Gift, Tag } from "lucide-react";
 import { getLatestSpecials } from "@/lib/queries/public";
+import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
+import { createClient } from "@/lib/supabase/server";
 import { SectionHeader } from "@/components/home/section-header";
 import { SectionShell } from "@/components/home/section-shell";
 import { SpecialCard } from "@/components/specials/special-card";
@@ -14,6 +16,14 @@ export const metadata = {
 };
 
 export default async function SpecialsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const business = user ? await getOwnerPrimaryBusiness(user.id) : null;
+  const canUploadSpecials = Boolean(business);
+
   const specials = await getLatestSpecials(24);
 
   return (
@@ -34,12 +44,14 @@ export default async function SpecialsPage() {
             <p className="mt-3 text-base leading-relaxed text-slate-700 sm:text-lg">
               Latest deals from verified South African businesses.
             </p>
-            <Button
-              className="mt-6 h-11 rounded-lg bg-sa-gold px-5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-sa-gold/90"
-              asChild
-            >
-              <Link href="/dashboard/specials">Upload Specials</Link>
-            </Button>
+            {canUploadSpecials && (
+              <Button
+                className="mt-6 h-11 rounded-lg bg-sa-gold px-5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-sa-gold/90"
+                asChild
+              >
+                <Link href="/dashboard/specials">Upload Specials</Link>
+              </Button>
+            )}
           </div>
         </section>
 
@@ -56,14 +68,18 @@ export default async function SpecialsPage() {
               <Gift className="mx-auto h-11 w-11 text-sa-gold" aria-hidden />
               <h2 className="mt-4 text-xl font-bold text-sa-blue">No active specials right now</h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600">
-                Check back soon or list your business promotion for customers across South Africa.
+                {canUploadSpecials
+                  ? "Upload a promotion from your dashboard to reach customers across South Africa."
+                  : "Check back soon for promotions from verified local businesses."}
               </p>
-              <Button
-                className="mt-6 h-11 rounded-lg bg-sa-gold px-5 text-sm font-semibold text-slate-900 hover:bg-sa-gold/90"
-                asChild
-              >
-                <Link href="/dashboard/specials">Upload Specials</Link>
-              </Button>
+              {canUploadSpecials && (
+                <Button
+                  className="mt-6 h-11 rounded-lg bg-sa-gold px-5 text-sm font-semibold text-slate-900 hover:bg-sa-gold/90"
+                  asChild
+                >
+                  <Link href="/dashboard/specials">Upload Specials</Link>
+                </Button>
+              )}
             </div>
           )}
         </section>
