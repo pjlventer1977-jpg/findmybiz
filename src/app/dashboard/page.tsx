@@ -96,6 +96,9 @@ export default async function DashboardPage() {
             <p className="text-xs text-muted-foreground">
               of {plan.leadsPerMonth}/month
             </p>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Plan credits reset each billing period. Purchased packs last 12 months.
+            </p>
           </CardContent>
         </Card>
         <Card>
