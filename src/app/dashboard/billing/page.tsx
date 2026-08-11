@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { BillingClient } from "./billing-client";
 import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
 import { isLaunchPromoActive } from "@/constants/launch-promo";
+import type { PaymentHistoryItem } from "./payment-history";
 
 export default async function BillingPage({
   searchParams,
@@ -23,6 +24,23 @@ export default async function BillingPage({
     .maybeSingle();
 
   const hasActiveSubscription = subscription?.status === "active";
+
+  const { data: paymentRows } = await supabase
+    .from("payments")
+    .select("id, amount, payment_type, status, created_at, metadata")
+    .eq("business_id", business.id)
+    .eq("status", "completed")
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  const payments: PaymentHistoryItem[] = (paymentRows ?? []).map((row) => ({
+    id: row.id,
+    amount: Number(row.amount),
+    payment_type: row.payment_type,
+    status: row.status,
+    created_at: row.created_at,
+    metadata: (row.metadata as Record<string, unknown> | null) ?? null,
+  }));
 
   return (
     <div className="space-y-6">
@@ -49,6 +67,7 @@ export default async function BillingPage({
               ? "cancelled"
               : null
         }
+        payments={payments}
       />
     </div>
   );
