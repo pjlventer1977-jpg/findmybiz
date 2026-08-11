@@ -109,6 +109,12 @@ export const BANNER_CATEGORY_MONTHLY = 699;
 export type AdProductType = "featured_ad" | "banner_home" | "banner_category";
 export type AdBillingPeriod = "week" | "month";
 
+/** Banners render at 3:1 (see AdBannerStrip). */
+export const AD_BANNER_ASPECT_RATIO = "3:1";
+export const AD_BANNER_RECOMMENDED_WIDTH = 1200;
+export const AD_BANNER_RECOMMENDED_HEIGHT = 400;
+export const AD_BANNER_IMAGE_HINT = `${AD_BANNER_RECOMMENDED_WIDTH}×${AD_BANNER_RECOMMENDED_HEIGHT}px (${AD_BANNER_ASPECT_RATIO} wide banner). JPG, PNG, or WebP. Max 5MB.`;
+
 export interface AdProductConfig {
   type: AdProductType;
   title: string;
@@ -117,6 +123,7 @@ export interface AdProductConfig {
   monthly: number;
   requiresImage: boolean;
   requiresCategory: boolean;
+  uploadHint?: string;
 }
 
 export const AD_PRODUCTS: AdProductConfig[] = [
@@ -128,6 +135,7 @@ export const AD_PRODUCTS: AdProductConfig[] = [
     monthly: FEATURED_AD_MONTHLY,
     requiresImage: false,
     requiresCategory: false,
+    uploadHint: "Uses your existing business logo and listing — no image upload.",
   },
   {
     type: "banner_home",
@@ -137,6 +145,7 @@ export const AD_PRODUCTS: AdProductConfig[] = [
     monthly: BANNER_HOME_MONTHLY,
     requiresImage: true,
     requiresCategory: false,
+    uploadHint: AD_BANNER_IMAGE_HINT,
   },
   {
     type: "banner_category",
@@ -146,6 +155,7 @@ export const AD_PRODUCTS: AdProductConfig[] = [
     monthly: BANNER_CATEGORY_MONTHLY,
     requiresImage: true,
     requiresCategory: true,
+    uploadHint: AD_BANNER_IMAGE_HINT,
   },
 ];
 
