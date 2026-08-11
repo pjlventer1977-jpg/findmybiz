@@ -530,19 +530,32 @@ export async function getPortfolioForBusiness(businessId: string) {
 }
 
 export async function getLatestSpecials(limit = 6): Promise<Special[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
+  const supabase = await createCatalogClient();
+  const today = new Date().toISOString().split("T")[0];
+  const { data, error } = await supabase
     .from("specials")
     .select(`
       *,
-      business:businesses(id, name, slug, logo_url, city:cities(name))
+      business:businesses(id, name, slug, logo_url, status, city:cities(name))
     `)
     .eq("status", "approved")
-    .gte("expiry_date", new Date().toISOString().split("T")[0])
+    .gte("expiry_date", today)
+    .not("image_url", "is", null)
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(limit * 2);
 
-  return data ?? [];
+  if (error) {
+    console.error("getLatestSpecials failed:", error.message);
+    return [];
+  }
+
+  return (data ?? [])
+    .filter(
+      (special) =>
+        special.image_url &&
+        (special.business as { status?: string } | null)?.status === "approved"
+    )
+    .slice(0, limit);
 }
 
 export async function getActiveSpecialsByBusinessId(

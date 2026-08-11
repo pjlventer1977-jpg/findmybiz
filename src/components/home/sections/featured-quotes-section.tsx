@@ -22,7 +22,7 @@ export function FeaturedQuotesSection({ businesses }: FeaturedQuotesSectionProps
     <section className="bg-white py-10 sm:py-12">
       <SectionShell>
         <div className="grid gap-6 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_320px]">
-          <div className="relative min-w-0 overflow-hidden rounded-3xl border border-sa-gold/20 bg-gradient-to-br from-slate-50 via-white to-sa-gold/5 p-6 shadow-sm sm:p-8">
+          <div className="relative min-w-0 rounded-3xl border border-sa-gold/20 bg-gradient-to-br from-slate-50 via-white to-sa-gold/5 p-6 shadow-sm sm:p-8">
             <div
               className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sa-gold via-amber-300 to-sa-gold"
               aria-hidden
@@ -37,7 +37,7 @@ export function FeaturedQuotesSection({ businesses }: FeaturedQuotesSectionProps
                   Featured Businesses
                 </h2>
                 <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">
-                  Hand-picked Professional &amp; Enterprise businesses across South Africa
+                  Enterprise members with homepage featured placement across South Africa
                 </p>
               </div>
               <Link
@@ -57,8 +57,8 @@ export function FeaturedQuotesSection({ businesses }: FeaturedQuotesSectionProps
               </>
             ) : (
               <EmptyState
-                title="No Professional or Enterprise businesses yet"
-                description="Check back soon as premium South African businesses join FindMyBiz."
+                title="No featured businesses yet"
+                description="Enterprise members appear here with homepage featured placement."
               />
             )}
           </div>
