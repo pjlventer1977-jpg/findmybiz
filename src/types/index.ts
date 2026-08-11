@@ -133,6 +133,15 @@ export interface QuoteRequest {
   category?: Category;
 }
 
+export interface PortfolioItem {
+  id: string;
+  business_id: string;
+  image_url: string;
+  caption?: string;
+  sort_order: number;
+  created_at: string;
+}
+
 export interface Review {
   id: string;
   business_id: string;
