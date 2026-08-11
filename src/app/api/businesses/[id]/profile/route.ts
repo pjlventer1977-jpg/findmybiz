@@ -3,6 +3,8 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOwnerPrimaryBusiness } from "@/lib/queries/dashboard";
 import { sendBusinessProfileUpdatedAdminEmail } from "@/lib/email/business-notifications";
+import { getCategoriesLimit } from "@/lib/membership/plan-access";
+import type { MembershipTier } from "@/types";
 
 const profileSchema = z.object({
   description: z.string().max(5000).optional().nullable(),
@@ -171,6 +173,18 @@ export async function PATCH(
     }
 
     if (categoryIds && categoryIds.length > 0) {
+      const categoryLimit = getCategoriesLimit(business.membership_tier as MembershipTier);
+      if (categoryIds.length > categoryLimit) {
+        return NextResponse.json(
+          {
+            error: `Your ${business.membership_tier} plan allows up to ${categoryLimit} categor${
+              categoryLimit === 1 ? "y" : "ies"
+            }. Upgrade for more.`,
+          },
+          { status: 403 }
+        );
+      }
+
       const { data: cats, error: catsError } = await supabase
         .from("categories")
         .select("id")

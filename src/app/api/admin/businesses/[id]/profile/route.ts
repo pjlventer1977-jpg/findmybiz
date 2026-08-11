@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { createServiceClient } from "@/lib/supabase/server";
+import { getCategoriesLimit } from "@/lib/membership/plan-access";
+import type { MembershipTier } from "@/types";
 
 const adminProfileSchema = z.object({
   name: z.string().min(2).max(200).optional(),
@@ -47,7 +49,7 @@ export async function PATCH(
 
   const { data: business, error: fetchError } = await supabase
     .from("businesses")
-    .select("id, name")
+    .select("id, name, membership_tier")
     .eq("id", id)
     .maybeSingle();
 
@@ -120,6 +122,20 @@ export async function PATCH(
       { error: "Select at least one service category." },
       { status: 400 }
     );
+  }
+
+  if (categoryIds && categoryIds.length > 0) {
+    const categoryLimit = getCategoriesLimit(business.membership_tier as MembershipTier);
+    if (categoryIds.length > categoryLimit) {
+      return NextResponse.json(
+        {
+          error: `This business is on the ${business.membership_tier} plan (max ${categoryLimit} categor${
+            categoryLimit === 1 ? "y" : "ies"
+          }).`,
+        },
+        { status: 403 }
+      );
+    }
   }
 
   const { error: updateError } = await supabase

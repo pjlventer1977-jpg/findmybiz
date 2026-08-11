@@ -48,6 +48,7 @@ async function downgradeBusinessToFree(
       membership_tier: "free",
       intended_membership_tier: "free",
       is_featured: false,
+      is_local_champion: false,
     })
     .eq("id", businessId);
 }
@@ -218,7 +219,12 @@ export async function POST(request: NextRequest) {
       if (tier === "enterprise") {
         await supabase
           .from("businesses")
-          .update({ is_featured: true })
+          .update({ is_featured: true, is_local_champion: true })
+          .eq("id", businessId);
+      } else {
+        await supabase
+          .from("businesses")
+          .update({ is_local_champion: false })
           .eq("id", businessId);
       }
 

@@ -223,7 +223,7 @@ export async function getAdminBusinessForEdit(businessId: string) {
   const { data: business, error } = await supabase
     .from("businesses")
     .select(
-      "id, name, description, phone, email, website, province_id, city_id, status, slug, logo_url, owner_id"
+      "id, name, description, phone, email, website, province_id, city_id, status, slug, logo_url, owner_id, membership_tier"
     )
     .eq("id", businessId)
     .maybeSingle();

@@ -129,10 +129,17 @@ export default async function DashboardPage() {
             {plan.price > 0 && <span className="text-sm font-normal">/month</span>}
           </p>
           <ul className="text-sm space-y-1 mb-4">
-            {plan.features.slice(0, 4).map((f) => (
+            {plan.features.map((f) => (
               <li key={f}>✓ {f}</li>
             ))}
           </ul>
+          <p className="mb-4 text-xs text-muted-foreground">
+            {plan.leadsPerMonth} lead{plan.leadsPerMonth === 1 ? "" : "s"}/month ·{" "}
+            {plan.categoriesLimit >= 999 ? "Unlimited" : plan.categoriesLimit}{" "}
+            {plan.categoriesLimit === 1 ? "category" : "categories"} ·{" "}
+            {plan.specialsPerMonth >= 999 ? "Unlimited" : plan.specialsPerMonth}{" "}
+            special{plan.specialsPerMonth === 1 ? "" : "s"}/month
+          </p>
           {business.membership_tier !== "enterprise" && (
             <Button asChild>
               <Link href="/dashboard/billing">Upgrade Plan</Link>

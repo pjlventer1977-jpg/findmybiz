@@ -18,11 +18,13 @@ export const MEMBERSHIP_PLANS: MembershipPlan[] = [
     price: 0,
     leadsPerMonth: 1,
     categoriesLimit: 1,
-    specialsPerMonth: 0,
+    specialsPerMonth: 1,
     features: [
       "Verified listing",
       "Company logo & contact details",
       "Basic search visibility",
+      "1 special per month",
+      "Email lead delivery",
     ],
   },
   {

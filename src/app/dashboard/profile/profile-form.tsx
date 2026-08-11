@@ -14,7 +14,9 @@ import {
   ServiceAreasSelect,
   type ServiceAreaSelection,
 } from "@/components/business/service-areas-select";
-import type { BusinessDocument, Category, Province } from "@/types";
+import { getPlanByTier } from "@/constants/membership";
+import { getCategoriesLimit } from "@/lib/membership/plan-access";
+import type { BusinessDocument, Category, MembershipTier, Province } from "@/types";
 
 interface ProfileFormProps {
   business: {
@@ -29,6 +31,7 @@ interface ProfileFormProps {
     status: string;
     slug: string;
     logo_url?: string | null;
+    membership_tier: MembershipTier;
   };
   documents: BusinessDocument[];
   provinces: Province[];
@@ -78,6 +81,8 @@ export function ProfileForm({
   );
   const idDocument = documents.find((doc) => doc.document_type === "id_document");
   const cipcDocument = documents.find((doc) => doc.document_type === "cipc");
+  const plan = getPlanByTier(business.membership_tier);
+  const categoryLimit = getCategoriesLimit(business.membership_tier);
 
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
@@ -253,8 +258,13 @@ export function ProfileForm({
                 categories={categories}
                 value={categoryIds}
                 onChange={setCategoryIds}
+                maxSelections={categoryLimit}
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                Your {plan.name} plan includes up to {categoryLimit}{" "}
+                {categoryLimit === 1 ? "category" : "categories"}.
+              </p>
             </div>
 
             <div id="service-areas" className="scroll-mt-24 space-y-2">

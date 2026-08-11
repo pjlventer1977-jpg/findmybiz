@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildWhatsAppLeadMessage } from "@/lib/lead-router";
+import { canUseWhatsAppLeadCards } from "@/lib/membership/plan-access";
 import { buildWhatsAppLink } from "@/lib/utils";
-import type { Lead, LeadStatus } from "@/types";
+import type { Lead, LeadStatus, MembershipTier } from "@/types";
 import { MarkLeadReadButton } from "./mark-lead-read-button";
 
 type QuoteRequestSummary = {
@@ -29,10 +30,12 @@ function statusLabel(status: LeadStatus) {
 export function LeadListItem({
   lead,
   businessWhatsapp,
+  membershipTier = "free",
   showMarkAsRead = false,
 }: {
   lead: LeadWithQuote;
   businessWhatsapp?: string | null;
+  membershipTier?: MembershipTier;
   showMarkAsRead?: boolean;
 }) {
   const qr = lead.quote_request;
@@ -48,9 +51,10 @@ export function LeadListItem({
     province_name: qr.province?.name,
   });
 
-  const waLink = businessWhatsapp
-    ? buildWhatsAppLink(qr.customer_phone, whatsappMessage)
-    : null;
+  const waLink =
+    businessWhatsapp && canUseWhatsAppLeadCards(membershipTier)
+      ? buildWhatsAppLink(qr.customer_phone, whatsappMessage)
+      : null;
 
   return (
     <Card>
