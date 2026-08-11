@@ -616,6 +616,24 @@ export async function getUpcomingEvents(limit = 6): Promise<Event[]> {
   return data ?? [];
 }
 
+export async function getEventBySlug(slug: string): Promise<Event | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("events")
+    .select(`
+      *,
+      province:provinces(name, slug),
+      city:cities(name, slug)
+    `)
+    .eq("slug", slug)
+    .eq("status", "approved")
+    .eq("is_paid", true)
+    .gte("paid_until", new Date().toISOString())
+    .maybeSingle();
+
+  return data;
+}
+
 export async function getPopularCategories(limit = 12): Promise<Category[]> {
   const supabase = await createClient();
   const { data } = await supabase
