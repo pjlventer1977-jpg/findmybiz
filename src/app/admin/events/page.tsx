@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { AdminEventActions } from "./event-actions";
+import { AdminSeedTestEventButton } from "./seed-test-event-button";
 
 export default async function AdminEventsPage() {
   const supabase = await createClient();
@@ -23,6 +24,7 @@ export default async function AdminEventsPage() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <h1 className="text-2xl font-bold">Event Moderation</h1>
+      <AdminSeedTestEventButton />
       {!events?.length ? (
         <p className="text-muted-foreground">No pending events.</p>
       ) : (
