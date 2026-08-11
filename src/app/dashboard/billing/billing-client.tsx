@@ -12,6 +12,7 @@ import {
 } from "@/constants/launch-promo";
 import { formatCurrency } from "@/lib/utils";
 import type { MembershipTier } from "@/types";
+import { PaymentHistory, type PaymentHistoryItem } from "./payment-history";
 
 interface BillingClientProps {
   businessId: string;
@@ -25,6 +26,7 @@ interface BillingClientProps {
   promoFullAmount?: number | null;
   promoConvertedAt?: string | null;
   paymentReturn?: "success" | "cancelled" | null;
+  payments: PaymentHistoryItem[];
 }
 
 export function BillingClient({
@@ -39,6 +41,7 @@ export function BillingClient({
   promoFullAmount = null,
   promoConvertedAt = null,
   paymentReturn = null,
+  payments,
 }: BillingClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
@@ -273,6 +276,8 @@ export function BillingClient({
           </div>
         </section>
       )}
+
+      <PaymentHistory payments={payments} />
 
       <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
         Your card statement may show <strong className="font-semibold text-slate-800">TECH-SMART</strong>{" "}
