@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Phone, Mail, Globe, MapPin, MessageCircle, FileText } from "lucide-react";
-import { getActiveSpecialsByBusinessId, getBusinessBySlug } from "@/lib/queries/public";
+import { Phone, Mail, Globe, MapPin, MessageCircle, FileText, Star } from "lucide-react";
+import { getActiveSpecialsByBusinessId, getApprovedReviewsForBusiness, getBusinessBySlug } from "@/lib/queries/public";
+import { canCollectReviews } from "@/lib/membership/plan-access";
 import { TrustBadge } from "@/components/business/business-card";
 import { BusinessSpecialsList } from "@/components/business/business-specials-list";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,12 @@ export default async function BusinessProfilePage({ params }: PageProps) {
   const { slug } = await params;
   const business = await getBusinessBySlug(slug);
   if (!business) notFound();
-  const specials = await getActiveSpecialsByBusinessId(business.id);
+  const [specials, reviews] = await Promise.all([
+    getActiveSpecialsByBusinessId(business.id),
+    canCollectReviews(business.membership_tier)
+      ? getApprovedReviewsForBusiness(business.id)
+      : Promise.resolve([]),
+  ]);
 
   const whatsappLink = business.whatsapp
     ? buildWhatsAppLink(
@@ -132,6 +138,34 @@ export default async function BusinessProfilePage({ params }: PageProps) {
                       </Link>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {reviews.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Customer Reviews</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-slate-900">{review.reviewer_name}</p>
+                        <div className="flex items-center gap-0.5 text-sa-gold">
+                          {Array.from({ length: review.rating }).map((_, index) => (
+                            <Star key={index} className="h-3.5 w-3.5 fill-current" aria-hidden />
+                          ))}
+                        </div>
+                      </div>
+                      {review.comment && (
+                        <p className="mt-1.5 text-sm text-slate-700">{review.comment}</p>
+                      )}
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {new Date(review.created_at).toLocaleDateString("en-ZA")}
+                      </p>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
             )}

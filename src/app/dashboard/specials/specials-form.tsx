@@ -90,10 +90,10 @@ export function SpecialsDashboard({
     }
   }
 
-  if (plan.specialsPerMonth === 0) {
+  if (plan.specialsPerMonth <= 0) {
     return (
       <p className="text-muted-foreground">
-        Upgrade to Starter or above to upload specials.
+        Your plan does not include monthly specials. Upgrade to unlock more.
       </p>
     );
   }

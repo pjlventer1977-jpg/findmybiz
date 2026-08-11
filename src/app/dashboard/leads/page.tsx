@@ -32,6 +32,12 @@ export default async function LeadsPage() {
         <p className="text-muted-foreground">
           New leads awaiting your response. Mark as read to move them to Total Leads Received.
         </p>
+        {business.membership_tier !== "professional" &&
+          business.membership_tier !== "enterprise" && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Upgrade to Professional for WhatsApp Lead Cards with pre-filled customer details.
+            </p>
+          )}
       </div>
 
       {!leads?.length ? (
@@ -47,6 +53,7 @@ export default async function LeadsPage() {
               key={lead.id}
               lead={lead}
               businessWhatsapp={business.whatsapp}
+              membershipTier={business.membership_tier}
               showMarkAsRead
             />
           ))}

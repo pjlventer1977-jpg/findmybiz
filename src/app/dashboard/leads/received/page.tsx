@@ -51,6 +51,7 @@ export default async function ReceivedLeadsPage() {
               key={lead.id}
               lead={lead}
               businessWhatsapp={business.whatsapp}
+              membershipTier={business.membership_tier}
             />
           ))}
         </div>

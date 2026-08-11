@@ -579,6 +579,24 @@ export async function getPopularCategories(limit = 12): Promise<Category[]> {
   return data ?? [];
 }
 
+export async function getApprovedReviewsForBusiness(businessId: string) {
+  const supabase = await createCatalogClient();
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("id, reviewer_name, rating, comment, created_at")
+    .eq("business_id", businessId)
+    .eq("status", "approved")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error("getApprovedReviewsForBusiness failed:", error.message);
+    return [];
+  }
+
+  return data ?? [];
+}
+
 export async function getHomepageStats(): Promise<{
   businesses: number;
   categories: number;

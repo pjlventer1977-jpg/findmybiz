@@ -50,6 +50,7 @@ export async function cancelBusinessSubscriptionIfActive(
       membership_tier: "free",
       intended_membership_tier: "free",
       is_featured: false,
+      is_local_champion: false,
     })
     .eq("id", businessId);
 

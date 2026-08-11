@@ -65,9 +65,9 @@ export async function POST(request: NextRequest) {
     const tier = business.membership_tier as MembershipTier;
     const plan = getPlanByTier(tier);
 
-    if (plan.specialsPerMonth === 0) {
+    if (plan.specialsPerMonth <= 0) {
       return NextResponse.json(
-        { error: "Upgrade to Starter or above to upload specials." },
+        { error: "Your plan does not include monthly specials." },
         { status: 403 }
       );
     }

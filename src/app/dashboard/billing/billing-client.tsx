@@ -264,6 +264,18 @@ export function BillingClient({
                   .
                 </p>
               )}
+              <p className="mt-2 text-xs text-slate-500">
+                Plan includes: {getPlanByTier(currentTier as MembershipTier).leadsPerMonth}{" "}
+                leads/month ·{" "}
+                {getPlanByTier(currentTier as MembershipTier).categoriesLimit >= 999
+                  ? "Unlimited"
+                  : getPlanByTier(currentTier as MembershipTier).categoriesLimit}{" "}
+                categories ·{" "}
+                {getPlanByTier(currentTier as MembershipTier).specialsPerMonth >= 999
+                  ? "Unlimited"
+                  : getPlanByTier(currentTier as MembershipTier).specialsPerMonth}{" "}
+                specials/month
+              </p>
             </div>
             <Button
               variant="outline"
