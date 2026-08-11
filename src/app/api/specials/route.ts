@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getPlanByTier } from "@/constants/membership";
-import { uploadSpecialImage, validateSpecialImageFile } from "@/lib/storage/special-image";
+import { uploadSpecialImage, validateSpecialImageFile, deleteSpecialImage } from "@/lib/storage/special-image";
 import type { MembershipTier } from "@/types";
 
 function todayISO() {
@@ -138,6 +138,74 @@ export async function POST(request: NextRequest) {
         uploadErr instanceof Error ? uploadErr.message : "Image upload failed";
       return NextResponse.json({ error: message }, { status: 500 });
     }
+  } catch {
+    return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const specialId = searchParams.get("specialId");
+    const businessId = searchParams.get("businessId");
+
+    if (!specialId || !businessId) {
+      return NextResponse.json(
+        { error: "Special ID and business ID are required" },
+        { status: 400 }
+      );
+    }
+
+    const { data: business, error: businessError } = await supabase
+      .from("businesses")
+      .select("id")
+      .eq("id", businessId)
+      .eq("owner_id", user.id)
+      .single();
+
+    if (businessError || !business) {
+      return NextResponse.json({ error: "Business not found" }, { status: 404 });
+    }
+
+    const { data: special, error: specialError } = await supabase
+      .from("specials")
+      .select("id, image_url")
+      .eq("id", specialId)
+      .eq("business_id", businessId)
+      .single();
+
+    if (specialError || !special) {
+      return NextResponse.json({ error: "Special not found" }, { status: 404 });
+    }
+
+    if (special.image_url) {
+      try {
+        await deleteSpecialImage(supabase, special.image_url);
+      } catch {
+        // Continue deleting the DB row even if storage cleanup fails.
+      }
+    }
+
+    const { error: deleteError } = await supabase
+      .from("specials")
+      .delete()
+      .eq("id", specialId)
+      .eq("business_id", businessId);
+
+    if (deleteError) {
+      return NextResponse.json({ error: "Failed to delete special" }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
   }
