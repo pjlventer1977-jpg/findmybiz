@@ -14,6 +14,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "*.supabase.co",
       },
+      {
+        protocol: "https",
+        hostname: "www.findmybiz.co.za",
+      },
+      {
+        protocol: "https",
+        hostname: "findmybiz.co.za",
+      },
     ],
   },
 };
