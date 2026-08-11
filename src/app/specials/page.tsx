@@ -6,6 +6,8 @@ import { SectionShell } from "@/components/home/section-shell";
 import { SpecialCard } from "@/components/specials/special-card";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Specials",
   description: "Browse the latest deals and promotions from South African businesses.",
