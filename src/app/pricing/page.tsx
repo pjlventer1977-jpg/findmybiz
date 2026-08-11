@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BANNER_CATEGORY_MONTHLY,
+  AD_BANNER_IMAGE_HINT,
   BANNER_CATEGORY_WEEKLY,
   BANNER_HOME_MONTHLY,
   BANNER_HOME_WEEKLY,
@@ -286,16 +287,19 @@ export default function PricingPage() {
                 title: "Featured listing",
                 weekly: FEATURED_AD_WEEKLY,
                 monthly: FEATURED_AD_MONTHLY,
+                note: "Uses your business listing — no image upload.",
               },
               {
                 title: "Home banner",
                 weekly: BANNER_HOME_WEEKLY,
                 monthly: BANNER_HOME_MONTHLY,
+                note: AD_BANNER_IMAGE_HINT,
               },
               {
                 title: "Category banner",
                 weekly: BANNER_CATEGORY_WEEKLY,
                 monthly: BANNER_CATEGORY_MONTHLY,
+                note: AD_BANNER_IMAGE_HINT,
               },
             ].map((item) => (
               <div
@@ -306,6 +310,7 @@ export default function PricingPage() {
                 <p className="mt-1 text-sm text-slate-600">
                   {formatCurrency(item.weekly)}/week · {formatCurrency(item.monthly)}/month
                 </p>
+                <p className="mt-2 text-xs text-muted-foreground">{item.note}</p>
               </div>
             ))}
           </div>

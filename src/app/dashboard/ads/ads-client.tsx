@@ -162,10 +162,14 @@ export function AdsDashboard({ businessId, businessName, categories }: AdsDashbo
                       accept="image/jpeg,image/png,image/webp"
                       className="block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-sa-gold/20 file:px-3 file:py-1 file:text-sm file:font-medium"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Recommended wide banner. JPG, PNG, or WebP. Max 5MB.
-                    </p>
+                    {product.uploadHint && (
+                      <p className="text-xs text-muted-foreground">{product.uploadHint}</p>
+                    )}
                   </div>
+                )}
+
+                {!product.requiresImage && product.uploadHint && (
+                  <p className="text-xs text-muted-foreground">{product.uploadHint}</p>
                 )}
 
                 <Button
