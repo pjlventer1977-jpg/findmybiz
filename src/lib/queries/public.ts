@@ -539,7 +539,6 @@ export async function getLatestSpecials(limit = 6): Promise<Special[]> {
       "id, business_id, title, description, image_url, start_date, expiry_date, status, created_at"
     )
     .eq("status", "approved")
-    .lte("start_date", today)
     .gte("expiry_date", today)
     .order("created_at", { ascending: false })
     .limit(Math.max(limit * 3, 12));
@@ -558,19 +557,17 @@ export async function getLatestSpecials(limit = 6): Promise<Special[]> {
   const businessIds = [...new Set(activeSpecials.map((special) => special.business_id))];
   const { data: businesses, error: businessError } = await supabase
     .from("businesses")
-    .select("id, name, slug, logo_url, status, city:cities(name)")
+    .select("id, name, slug, logo_url, status")
     .in("id", businessIds)
     .eq("status", "approved");
 
   if (businessError) {
     console.error("getLatestSpecials businesses failed:", businessError.message);
-    return [];
   }
 
   const businessMap = new Map((businesses ?? []).map((business) => [business.id, business]));
 
   return activeSpecials
-    .filter((special) => businessMap.has(special.business_id))
     .slice(0, limit)
     .map((special) => ({
       ...special,
@@ -588,7 +585,6 @@ export async function getActiveSpecialsByBusinessId(
     .select("id, title, description, image_url, start_date, expiry_date, business_id, status, created_at")
     .eq("business_id", businessId)
     .eq("status", "approved")
-    .lte("start_date", today)
     .gte("expiry_date", today)
     .order("created_at", { ascending: false });
 
