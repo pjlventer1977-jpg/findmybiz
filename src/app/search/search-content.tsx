@@ -1,4 +1,6 @@
 import { searchBusinesses, getProvinces, getCategoryTree, getCategoryBySlug } from "@/lib/queries/public";
+import { getActiveCategoryBanner } from "@/lib/queries/ads";
+import { AdBannerStrip } from "@/components/ads/ad-banner-strip";
 import { BusinessCard } from "@/components/business/business-card";
 import { SearchAppearanceTracker } from "@/components/analytics/search-appearance-tracker";
 import { logSearchAnalytics } from "@/lib/analytics/log-search";
@@ -26,6 +28,10 @@ export async function SearchPageContent({ params }: SearchPageContentProps) {
     params.category ? getCategoryBySlug(params.category) : Promise.resolve(null),
   ]);
 
+  const categoryBanner = activeCategory
+    ? await getActiveCategoryBanner(activeCategory.id)
+    : null;
+
   const categoryLabel = activeCategory?.name;
 
   void logSearchAnalytics({
@@ -51,6 +57,12 @@ export async function SearchPageContent({ params }: SearchPageContentProps) {
           </span>
         )}
       </p>
+
+      {categoryBanner && (
+        <div className="mb-6">
+          <AdBannerStrip banners={[categoryBanner]} label="Sponsored in this category" />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <aside className="lg:col-span-1">

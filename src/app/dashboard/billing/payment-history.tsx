@@ -37,6 +37,18 @@ export function getPaymentDescription(payment: PaymentHistoryItem): string {
     return "Event listing";
   }
 
+  if (payment.payment_type === "featured_ad") {
+    return "Featured listing ad";
+  }
+
+  if (payment.payment_type === "banner_home") {
+    return "Home banner ad";
+  }
+
+  if (payment.payment_type === "banner_category") {
+    return "Category banner ad";
+  }
+
   return payment.payment_type.replace(/_/g, " ");
 }
 

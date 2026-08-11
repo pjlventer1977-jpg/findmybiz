@@ -1,4 +1,5 @@
 import { createClient, createCatalogClient } from "@/lib/supabase/server";
+import { expireStaleFeaturedAds } from "@/lib/ads/lifecycle";
 import {
   businessMatchesAllSearchTerms,
   categoryMatchesAllSearchTerms,
@@ -496,6 +497,7 @@ export async function getBusinessBySlug(slug: string): Promise<Business | null> 
 
 export async function getFeaturedBusinesses(): Promise<Business[]> {
   const supabase = await createCatalogClient();
+  await expireStaleFeaturedAds(supabase);
   const { data, error } = await supabase
     .from("businesses")
     .select("*")
