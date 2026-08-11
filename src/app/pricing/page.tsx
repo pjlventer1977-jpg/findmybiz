@@ -275,13 +275,10 @@ export default function PricingPage() {
         </section>
 
         <section className="mx-auto mt-12 max-w-3xl border-t border-slate-200 pt-12 text-center">
-          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-sa-blue">
-            Coming soon
-          </p>
           <h2 className="mb-3 text-2xl font-bold text-sa-blue">Featured &amp; Banner Ads</h2>
           <p className="mx-auto mb-8 max-w-2xl text-sm leading-relaxed text-slate-600">
-            Homepage and category placements are priced below but not available for
-            self-serve purchase yet. Contact support if you need a sponsored placement.
+            Boost visibility with homepage featured placement or paid banner slots on the
+            homepage and in category search results.
           </p>
           <div className="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
             {[
@@ -303,18 +300,21 @@ export default function PricingPage() {
             ].map((item) => (
               <div
                 key={item.title}
-                className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-left opacity-90"
+                className="rounded-2xl border border-sa-gold/30 bg-white p-4 text-left shadow-sm"
               >
                 <p className="font-semibold text-sa-blue">{item.title}</p>
                 <p className="mt-1 text-sm text-slate-600">
                   {formatCurrency(item.weekly)}/week · {formatCurrency(item.monthly)}/month
                 </p>
-                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Coming soon
-                </p>
               </div>
             ))}
           </div>
+          <Button className="mt-8 h-11 rounded-lg bg-sa-gold px-5 text-sm font-semibold text-slate-900 hover:bg-sa-gold/90" asChild>
+            <Link href="/dashboard/ads">Purchase Advertising</Link>
+          </Button>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Sign in with your business account to purchase. Approved listings only.
+          </p>
         </section>
 
         <section className="mx-auto mt-12 max-w-5xl rounded-2xl bg-gradient-to-r from-sa-green to-sa-blue px-6 py-8 text-center text-white shadow-lg sm:px-8">

@@ -505,3 +505,23 @@ export function createEventPayment(params: {
     item_description: `Find My Biz event advert (${params.durationWeeks} week${params.durationWeeks === 1 ? "" : "s"})`,
   });
 }
+
+export function createAdPayment(params: {
+  email: string;
+  productTitle: string;
+  amount: number;
+  paymentId: string;
+  periodLabel: string;
+}) {
+  const appUrl = getCanonicalAppUrl();
+  return buildPayFastFormData({
+    return_url: `${appUrl}/dashboard/ads?success=true`,
+    cancel_url: `${appUrl}/dashboard/ads?cancelled=true`,
+    notify_url: `${appUrl}/api/webhooks/payfast`,
+    email_address: params.email,
+    m_payment_id: params.paymentId,
+    amount: params.amount,
+    item_name: `Find My Biz ${params.productTitle}`,
+    item_description: `${params.productTitle} (${params.periodLabel})`,
+  });
+}

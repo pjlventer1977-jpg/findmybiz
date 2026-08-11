@@ -106,6 +106,64 @@ export const BANNER_HOME_MONTHLY = 999;
 export const BANNER_CATEGORY_WEEKLY = 199;
 export const BANNER_CATEGORY_MONTHLY = 699;
 
+export type AdProductType = "featured_ad" | "banner_home" | "banner_category";
+export type AdBillingPeriod = "week" | "month";
+
+export interface AdProductConfig {
+  type: AdProductType;
+  title: string;
+  description: string;
+  weekly: number;
+  monthly: number;
+  requiresImage: boolean;
+  requiresCategory: boolean;
+}
+
+export const AD_PRODUCTS: AdProductConfig[] = [
+  {
+    type: "featured_ad",
+    title: "Featured listing",
+    description: "Homepage featured placement with premium visibility.",
+    weekly: FEATURED_AD_WEEKLY,
+    monthly: FEATURED_AD_MONTHLY,
+    requiresImage: false,
+    requiresCategory: false,
+  },
+  {
+    type: "banner_home",
+    title: "Home banner",
+    description: "Banner on the FindMyBiz homepage.",
+    weekly: BANNER_HOME_WEEKLY,
+    monthly: BANNER_HOME_MONTHLY,
+    requiresImage: true,
+    requiresCategory: false,
+  },
+  {
+    type: "banner_category",
+    title: "Category banner",
+    description: "Banner on search results for your chosen category.",
+    weekly: BANNER_CATEGORY_WEEKLY,
+    monthly: BANNER_CATEGORY_MONTHLY,
+    requiresImage: true,
+    requiresCategory: true,
+  },
+];
+
+export function getAdProduct(type: AdProductType): AdProductConfig {
+  const product = AD_PRODUCTS.find((item) => item.type === type);
+  if (!product) throw new Error("Unknown ad product");
+  return product;
+}
+
+export function getAdPrice(type: AdProductType, period: AdBillingPeriod): number {
+  const product = getAdProduct(type);
+  return period === "week" ? product.weekly : product.monthly;
+}
+
+export function getAdDurationDays(period: AdBillingPeriod): number {
+  return period === "week" ? 7 : 30;
+}
+
 export const LOCAL_CHAMPION_SLOTS = 3;
 
 export function getPlanByTier(tier: MembershipTier): MembershipPlan {

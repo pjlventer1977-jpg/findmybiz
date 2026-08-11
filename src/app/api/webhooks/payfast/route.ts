@@ -24,6 +24,7 @@ import {
   SUBSCRIPTION_PERIOD_DAYS,
 } from "@/lib/payments/subscription-lifecycle";
 import { getPromoEndsAt } from "@/constants/launch-promo";
+import { activateBannerAd, activateFeaturedAd } from "@/lib/ads/lifecycle";
 
 async function downgradeBusinessToFree(
   supabase: Awaited<ReturnType<typeof createServiceClient>>,
@@ -312,6 +313,31 @@ export async function POST(request: NextRequest) {
           status: "pending",
         })
         .eq("id", eventId);
+      break;
+    }
+
+    case "featured_ad":
+    case "banner_home":
+    case "banner_category": {
+      const businessId = metadata.business_id as string;
+      const durationDays = Number(metadata.duration_days) || 7;
+
+      if (payment.payment_type === "featured_ad") {
+        await activateFeaturedAd(supabase, {
+          businessId,
+          paymentId: payment.id,
+          durationDays,
+        });
+      } else {
+        const bannerAdId = metadata.banner_ad_id as string;
+        if (bannerAdId) {
+          await activateBannerAd(supabase, { bannerAdId, durationDays });
+          await supabase
+            .from("banner_ads")
+            .update({ payment_id: payment.id })
+            .eq("id", bannerAdId);
+        }
+      }
       break;
     }
   }
