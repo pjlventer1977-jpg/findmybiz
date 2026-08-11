@@ -94,19 +94,22 @@ export default async function EventDetailPage({ params }: PageProps) {
         </div>
 
         <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="relative aspect-[3/1] w-full bg-gradient-to-r from-sa-blue via-sa-green to-sa-blue/80">
-            {event.banner_url ? (
+          {event.banner_url ? (
+            <div className="border-b border-slate-100 bg-slate-100">
               <Image
                 src={event.banner_url}
                 alt={event.name}
-                fill
-                priority
+                width={0}
+                height={0}
                 sizes="100vw"
-                className="object-cover"
+                priority
                 unoptimized
+                className="mx-auto h-auto max-h-[85vh] w-full object-contain"
               />
-            ) : null}
-          </div>
+            </div>
+          ) : (
+            <div className="aspect-[3/2] w-full bg-gradient-to-r from-sa-blue via-sa-green to-sa-blue/80" />
+          )}
 
           <div className="space-y-6 p-6 sm:p-8">
             <div className="space-y-3">
