@@ -500,22 +500,33 @@ export async function getFeaturedBusinesses(): Promise<Business[]> {
     .from("businesses")
     .select("*")
     .eq("status", "approved")
-    .in("membership_tier", ["professional", "enterprise"])
+    .eq("is_featured", true)
     .order("biz_trust_score", { ascending: false })
-    .limit(1000);
+    .limit(12);
 
   if (error) {
     console.error("getFeaturedBusinesses failed:", error.message);
     return [];
   }
 
-  const businesses = await hydrateBusinessList(supabase, (data ?? []) as Business[]);
+  return hydrateBusinessList(supabase, (data ?? []) as Business[]);
+}
 
-  return businesses.sort((a, b) => {
-    const tierRank = { enterprise: 2, professional: 1 } as const;
-    return tierRank[b.membership_tier as keyof typeof tierRank] -
-      tierRank[a.membership_tier as keyof typeof tierRank];
-  });
+export async function getPortfolioForBusiness(businessId: string) {
+  const supabase = await createCatalogClient();
+  const { data, error } = await supabase
+    .from("business_portfolio")
+    .select("id, image_url, caption, sort_order")
+    .eq("business_id", businessId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("getPortfolioForBusiness failed:", error.message);
+    return [];
+  }
+
+  return (data ?? []).filter((item) => item.image_url);
 }
 
 export async function getLatestSpecials(limit = 6): Promise<Special[]> {
