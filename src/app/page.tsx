@@ -9,6 +9,8 @@ import { ProvincesSection } from "@/components/home/sections/provinces-section";
 import { BusinessOwnersSection } from "@/components/home/sections/business-owners-section";
 import { TestimonialsSection } from "@/components/home/sections/testimonials-section";
 
+export const dynamic = "force-dynamic";
+
 export default function HomePage() {
   return (
     <>
