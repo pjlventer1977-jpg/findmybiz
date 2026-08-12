@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Building2, Check, CircleEllipsis, MapPin, MessageCircle } from "lucide-react";
 import { SectionShell } from "@/components/home/section-shell";
 import { SA_PROVINCES } from "@/data/homepage";
+import { formatStat } from "@/lib/format-stat";
 
 interface StatsMapSectionProps {
   stats: {
@@ -10,16 +11,6 @@ interface StatsMapSectionProps {
     quotes: number;
     provinces: number;
   };
-}
-
-function formatStat(value: number) {
-  if (value >= 10000) {
-    return `${Math.floor(value / 100) / 100}`.replace(/\.?0+$/, "") + "k+";
-  }
-  if (value >= 1000) {
-    return `${Math.floor(value / 100) / 10}k+`;
-  }
-  return `${value.toLocaleString("en-ZA")}+`;
 }
 
 const STAT_ITEMS = [

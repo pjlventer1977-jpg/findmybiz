@@ -1,5 +1,6 @@
 import { Building2, CircleEllipsis, MapPin, MessageCircle } from "lucide-react";
 import { SectionShell } from "@/components/home/section-shell";
+import { formatStat } from "@/lib/format-stat";
 
 interface StatsBarSectionProps {
   stats: {
@@ -8,17 +9,6 @@ interface StatsBarSectionProps {
     quotes: number;
     provinces: number;
   };
-}
-
-function formatStat(value: number) {
-  if (value >= 10000) {
-    return `${Math.floor(value / 100).toLocaleString("en-ZA")}+`;
-  }
-  if (value >= 1000) {
-    const formatted = Math.floor(value / 100) / 10;
-    return `${formatted.toLocaleString("en-ZA")}k+`;
-  }
-  return `${value.toLocaleString("en-ZA")}+`;
 }
 
 const STAT_ITEMS = [
