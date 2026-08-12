@@ -27,10 +27,11 @@ export async function Header() {
           <Image
             src="/findmybiz-logo-transparent.png"
             alt="FindMyBiz"
-            width={140}
-            height={42}
+            width={280}
+            height={280}
             priority
-            className="h-9 w-auto object-contain sm:h-11"
+            unoptimized
+            className="h-[72px] w-auto object-contain sm:h-[88px]"
           />
           <span className="hidden min-w-0 border-l border-slate-200 pl-3 lg:block">
             <span className="block text-[10px] font-bold uppercase tracking-wider text-sa-blue">
