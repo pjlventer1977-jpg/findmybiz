@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { Header } from "@/components/layout/header";
@@ -86,6 +87,7 @@ export default function RootLayout({
         <main className="min-h-[calc(100vh-4rem)] overflow-x-hidden">{children}</main>
         <Footer />
         <PwaInstallPrompt />
+        <Analytics />
       </body>
     </html>
   );
