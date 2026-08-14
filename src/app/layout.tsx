@@ -6,6 +6,7 @@ import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { PwaInstallPrompt } from "@/components/pwa/pwa-install-prompt";
+import { VisitorAssistant } from "@/components/assistant/visitor-assistant";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -87,6 +88,7 @@ export default function RootLayout({
         <main className="min-h-[calc(100vh-4rem)] overflow-x-hidden">{children}</main>
         <Footer />
         <PwaInstallPrompt />
+        <VisitorAssistant />
         <Analytics />
       </body>
     </html>
