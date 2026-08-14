@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
 import { randomUUID } from "crypto";
+import { fallbackAssistantReply } from "@/lib/assistant/fallback";
 import { getAssistantSystemPrompt } from "@/lib/assistant/knowledge";
-import { checkAssistantRateLimit } from "@/lib/assistant/rate-limit";
 import {
-  SEARCH_LISTINGS_TOOL,
-  searchListingsTool,
-  type AssistantListing,
-} from "@/lib/assistant/tools";
+  createChatCompletion,
+  getOpenAIApiKey,
+  OpenAIRequestError,
+  type OpenAIChatMessage,
+} from "@/lib/assistant/openai-client";
+import { checkAssistantRateLimit } from "@/lib/assistant/rate-limit";
+import { searchListingsTool, type AssistantListing } from "@/lib/assistant/tools";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -19,7 +21,7 @@ const MAX_CONTENT = 2000;
 type ChatRole = "user" | "assistant";
 
 function isAssistantEnabled() {
-  return Boolean(process.env.OPENAI_API_KEY?.trim());
+  return Boolean(getOpenAIApiKey());
 }
 
 function clientKey(request: NextRequest, cookieId: string) {
@@ -45,6 +47,16 @@ function withCookie(response: NextResponse, cookieId: string, setCookie: boolean
     });
   }
   return response;
+}
+
+function visitorError(status: number, code?: string) {
+  if (status === 401 || status === 403) {
+    return "The assistant is not fully connected yet. Please try again later or email support@findmybiz.co.za.";
+  }
+  if (status === 429 || code === "insufficient_quota") {
+    return "The assistant is busy right now. Please try again in a minute, or use Search / Get 5 Quotes.";
+  }
+  return "The assistant could not reply. Please try again, or use Search / Get 5 Quotes.";
 }
 
 export async function GET() {
@@ -97,7 +109,8 @@ export async function POST(request: NextRequest) {
     .filter((item) => item.content.length > 0)
     .slice(-MAX_MESSAGES);
 
-  if (messages.length === 0 || messages[messages.length - 1]?.role !== "user") {
+  const lastUser = messages[messages.length - 1];
+  if (!lastUser || lastUser.role !== "user") {
     return withCookie(
       NextResponse.json({ error: "Send a message to continue." }, { status: 400 }),
       cookieId,
@@ -105,41 +118,36 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const openaiMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+  const openaiMessages: OpenAIChatMessage[] = [
     { role: "system", content: getAssistantSystemPrompt() },
-    ...messages,
+    ...messages.map((item) => ({ role: item.role, content: item.content })),
   ];
 
   let listings: AssistantListing[] = [];
 
   try {
     for (let round = 0; round < 3; round += 1) {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        temperature: 0.3,
-        max_tokens: 500,
-        tools: [SEARCH_LISTINGS_TOOL],
-        messages: openaiMessages,
+      const completion = await createChatCompletion(openaiMessages);
+
+      if (completion.toolCalls.length === 0 || completion.finishReason === "stop") {
+        const text =
+          completion.content ||
+          "I can help you find a local business or request quotes.";
+        return withCookie(
+          NextResponse.json({ message: text, listings }),
+          cookieId,
+          setCookie
+        );
+      }
+
+      openaiMessages.push({
+        role: "assistant",
+        content: completion.content || null,
+        tool_calls: completion.toolCalls,
       });
 
-      const choice = completion.choices[0];
-      const assistantMessage = choice?.message;
-      if (!assistantMessage) {
-        throw new Error("Empty model response");
-      }
-
-      const toolCalls = assistantMessage.tool_calls ?? [];
-      if (toolCalls.length === 0 || choice.finish_reason === "stop") {
-        const text = assistantMessage.content?.trim() || "I can help you find a local business or request quotes.";
-        const response = NextResponse.json({ message: text, listings });
-        return withCookie(response, cookieId, setCookie);
-      }
-
-      openaiMessages.push(assistantMessage);
-
-      for (const toolCall of toolCalls) {
-        if (toolCall.type !== "function" || toolCall.function.name !== "search_listings") {
+      for (const toolCall of completion.toolCalls) {
+        if (toolCall.function.name !== "search_listings") {
           openaiMessages.push({
             role: "tool",
             tool_call_id: toolCall.id,
@@ -168,20 +176,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const fallback = NextResponse.json({
-      message: listings.length
-        ? "Here are approved listings I found. Open a profile or request quotes if you need more matches."
-        : "I could not finish that search. Try /search or /get-quotes, or email support@findmybiz.co.za.",
-      listings,
-    });
-    return withCookie(fallback, cookieId, setCookie);
+    if (listings.length > 0) {
+      return withCookie(
+        NextResponse.json({
+          message:
+            "Here are approved listings I found. Open a profile or request quotes if you need more matches.",
+          listings,
+        }),
+        cookieId,
+        setCookie
+      );
+    }
+
+    const fallback = await fallbackAssistantReply(lastUser.content);
+    return withCookie(NextResponse.json(fallback), cookieId, setCookie);
   } catch (error) {
+    const status = error instanceof OpenAIRequestError ? error.status : 502;
     const detail = error instanceof Error ? error.message : "unknown";
-    console.error("Assistant chat failed:", detail);
-    const response = NextResponse.json(
-      { error: "The assistant could not reply. Please try again." },
-      { status: 502 }
-    );
-    return withCookie(response, cookieId, setCookie);
+    const code = error instanceof OpenAIRequestError ? error.code : undefined;
+    console.error("Assistant chat failed:", { status, code, detail });
+
+    try {
+      const fallback = await fallbackAssistantReply(lastUser.content);
+      return withCookie(NextResponse.json(fallback), cookieId, setCookie);
+    } catch (fallbackError) {
+      console.error(
+        "Assistant fallback failed:",
+        fallbackError instanceof Error ? fallbackError.message : fallbackError
+      );
+      return withCookie(
+        NextResponse.json({ error: visitorError(status, code) }, { status: 502 }),
+        cookieId,
+        setCookie
+      );
+    }
   }
 }
