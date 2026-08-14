@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Loader2, MessageCircle, Send, X } from "lucide-react";
+import { Loader2, Send, X } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import type { AssistantListing } from "@/lib/assistant/types";
 
@@ -32,7 +33,7 @@ export function VisitorAssistant() {
     {
       role: "assistant",
       content:
-        "Hi — I can help you find a local business or request quotes. What do you need?",
+        "Hi, I’m Bizzy — always on the lookout to help you find a local business or request quotes. What do you need?",
     },
   ]);
   const listRef = useRef<HTMLDivElement>(null);
@@ -107,9 +108,19 @@ export function VisitorAssistant() {
       {open && (
         <div className="flex h-[min(32rem,calc(100vh-7rem))] w-[min(100vw-2rem,24rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
           <div className="flex items-center justify-between bg-sa-blue px-4 py-3 text-white">
-            <div>
-              <p className="text-sm font-semibold">FindMyBiz assistant</p>
-              <p className="text-xs text-white/80">Find businesses · Get quotes · List yours</p>
+            <div className="flex min-w-0 items-center gap-3">
+              <Image
+                src="/assistant/bizzy.png"
+                alt=""
+                width={44}
+                height={44}
+                className="h-11 w-11 rounded-full border-2 border-white/30 bg-white object-cover object-top"
+                unoptimized
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">Bizzy</p>
+                <p className="text-xs text-white/80">FindMyBiz assistant · Find. Connect. Grow.</p>
+              </div>
             </div>
             <button
               type="button"
@@ -125,12 +136,27 @@ export function VisitorAssistant() {
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}
-                className={`max-w-[90%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-                  message.role === "user"
-                    ? "ml-auto bg-sa-blue text-white"
-                    : "bg-slate-100 text-slate-800"
+                className={`flex max-w-[90%] gap-2 ${
+                  message.role === "user" ? "ml-auto flex-row-reverse" : "items-end"
                 }`}
               >
+                {message.role === "assistant" && (
+                  <Image
+                    src="/assistant/bizzy.png"
+                    alt=""
+                    width={28}
+                    height={28}
+                    className="mb-0.5 h-7 w-7 shrink-0 rounded-full bg-white object-cover object-top"
+                    unoptimized
+                  />
+                )}
+                <div
+                  className={`rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                    message.role === "user"
+                      ? "bg-sa-blue text-white"
+                      : "bg-slate-100 text-slate-800"
+                  }`}
+                >
                 <p className="whitespace-pre-wrap">{message.content}</p>
                 {message.listings && message.listings.length > 0 && (
                   <ul className="mt-2 space-y-1.5">
@@ -158,6 +184,7 @@ export function VisitorAssistant() {
                     </Link>
                   </p>
                 )}
+                </div>
               </div>
             ))}
             {loading && (
@@ -211,17 +238,22 @@ export function VisitorAssistant() {
         </div>
       )}
 
-      <Button
+      <button
         type="button"
-        size="lg"
         aria-expanded={open}
-        aria-label={open ? "Close assistant" : "Open FindMyBiz assistant"}
-        className="h-14 rounded-full bg-sa-gold px-4 text-sm font-semibold text-slate-900 shadow-lg hover:bg-sa-gold/90"
+        aria-label={open ? "Close Bizzy" : "Open Bizzy, FindMyBiz assistant"}
+        className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-sa-gold shadow-lg ring-2 ring-sa-blue/20 transition hover:scale-105"
         onClick={() => setOpen((current) => !current)}
       >
-        <MessageCircle className="mr-2 h-5 w-5" />
-        Help
-      </Button>
+        <Image
+          src="/assistant/bizzy.png"
+          alt="Bizzy"
+          width={64}
+          height={64}
+          className="h-16 w-16 object-cover object-top"
+          unoptimized
+        />
+      </button>
     </div>
   );
 }
