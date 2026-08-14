@@ -15,6 +15,10 @@ export default function PrivacyPage() {
         <li>Business registration details (name, contact, address, documents)</li>
         <li>Customer quote request details (name, phone, email, service requirements)</li>
         <li>Usage analytics (profile views, search appearances)</li>
+        <li>
+          Optional assistant chat messages if you use the Help widget (processed by OpenAI to
+          generate a reply)
+        </li>
         <li>Payment references processed via PayFast (we do not store full card details)</li>
       </ul>
       <h2>How We Use Your Information</h2>
@@ -29,6 +33,8 @@ export default function PrivacyPage() {
         Customer contact details are shared with matched businesses only when explicit POPIA
         consent is given during quote requests. We do not sell personal data to third parties.
         Payment processing is handled by PayFast; authentication and storage use Supabase.
+        Optional Help-widget messages are sent to OpenAI to generate replies. We do not use
+        those chats to train a custom FindMyBiz model.
       </p>
       <h2>Cookies</h2>
       <p>

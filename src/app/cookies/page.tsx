@@ -27,6 +27,11 @@ export default function CookiesPage() {
         <li>
           <strong>Hosting (Vercel)</strong> — delivery and security of the website
         </li>
+        <li>
+          <strong>OpenAI</strong> — optional FindMyBiz assistant chat. Messages you type in
+          the Help widget are sent to OpenAI so we can generate a reply. The assistant is
+          optional; you can use the site without it.
+        </li>
       </ul>
       <h2>Analytics</h2>
       <p>
