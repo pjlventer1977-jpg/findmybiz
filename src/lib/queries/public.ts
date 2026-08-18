@@ -598,14 +598,14 @@ export async function getActiveSpecialsByBusinessId(
   return data ?? [];
 }
 
-export async function getUpcomingEvents(limit = 6): Promise<Event[]> {
+export async function getUpcomingEvents(limit = 100): Promise<Event[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("events")
     .select(`
       *,
-      province:provinces(name),
-      city:cities(name)
+      province:provinces(id, name, slug),
+      city:cities(name, slug)
     `)
     .eq("status", "approved")
     .eq("is_paid", true)

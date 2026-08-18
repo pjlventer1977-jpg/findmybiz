@@ -1,19 +1,21 @@
 import { getUpcomingEvents } from "@/lib/queries/public";
 import Link from "next/link";
 import { CalendarDays, MapPin, Sparkles } from "lucide-react";
-import { EventCard } from "@/components/home/cards/event-card";
 import { SectionHeader } from "@/components/home/section-header";
 import { SectionShell } from "@/components/home/section-shell";
 import { Button } from "@/components/ui/button";
 import { EVENT_DURATION_OPTIONS, EVENT_PRICE_WEEKLY } from "@/constants/membership";
+import { EventsGroupedByProvince } from "./events-grouped";
 
 export const metadata = {
   title: "Events",
   description: "Discover markets, festivals, expos, and events across South Africa.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function EventsPage() {
-  const events = await getUpcomingEvents(24);
+  const events = await getUpcomingEvents(100);
 
   return (
     <main className="min-h-screen bg-slate-50 py-8 sm:py-10">
@@ -43,8 +45,8 @@ export default async function EventsPage() {
               ))}
             </div>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/85">
-              From R{EVENT_PRICE_WEEKLY}. No account required — upload your poster, choose
-              duration, pay online. Admin approval before going live.
+              From R{EVENT_PRICE_WEEKLY}. No account required — fill in event details,
+              upload your poster, choose duration, pay online. Admin approval before going live.
             </p>
             <Button
               className="mt-6 h-11 rounded-lg bg-sa-gold px-5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-sa-gold/90"
@@ -73,11 +75,7 @@ export default async function EventsPage() {
         <section className="pt-8 sm:pt-10">
           <SectionHeader title="Upcoming Events" />
           {events.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {events.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
+            <EventsGroupedByProvince events={events} />
           ) : (
             <div className="rounded-2xl border border-dashed border-sa-green/35 bg-white px-6 py-12 text-center shadow-sm">
               <CalendarDays className="mx-auto h-11 w-11 text-sa-green" aria-hidden />

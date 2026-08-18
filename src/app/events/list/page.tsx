@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CalendarDays } from "lucide-react";
+import { getProvinces } from "@/lib/queries/public";
 import { EventAdvertForm } from "./event-advert-form";
 
 export const metadata = {
@@ -12,7 +13,10 @@ export default async function EventListingPage({
 }: {
   searchParams: Promise<{ cancelled?: string }>;
 }) {
-  const { cancelled } = await searchParams;
+  const [{ cancelled }, provinces] = await Promise.all([
+    searchParams,
+    getProvinces(),
+  ]);
 
   return (
     <main className="min-h-screen bg-slate-50 py-8 sm:py-12">
@@ -24,8 +28,8 @@ export default async function EventListingPage({
           </p>
           <h1 className="mt-2 text-3xl font-bold">Put your event in front of local customers.</h1>
           <p className="mt-4 leading-relaxed text-white/85">
-            Upload your poster, select how long it should appear, and pay online. No account
-            required.
+            Fill in event details, upload your poster, select how long it should appear, and pay online.
+            No account required.
           </p>
           <p className="mt-4 text-sm leading-relaxed text-white/85">
             Every advert is reviewed by our team before it appears on the Events page.
@@ -34,7 +38,7 @@ export default async function EventListingPage({
             href="/events"
             className="mt-6 inline-block text-sm font-semibold text-sa-gold hover:underline"
           >
-            ← Back to events
+            &larr; Back to events
           </Link>
         </section>
 
@@ -44,7 +48,7 @@ export default async function EventListingPage({
               Payment was cancelled. Your advert has not been submitted for review.
             </p>
           )}
-          <EventAdvertForm />
+          <EventAdvertForm provinces={provinces} />
         </div>
       </div>
     </main>

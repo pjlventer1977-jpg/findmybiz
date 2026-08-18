@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { EVENT_DURATION_OPTIONS } from "@/constants/membership";
 import { createEventPayment } from "@/lib/payfast";
 import { createServiceClient } from "@/lib/supabase/server";
+import { slugify } from "@/lib/utils";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -16,9 +17,27 @@ export async function POST(request: NextRequest) {
   }
 
   const formData = await request.formData();
+
   const banner = formData.get("banner");
   const durationWeeks = Number(formData.get("durationWeeks"));
   const duration = EVENT_DURATION_OPTIONS.find((option) => option.weeks === durationWeeks);
+  const eventName = (formData.get("eventName") as string)?.trim();
+  const contactPhone = (formData.get("contactPhone") as string)?.trim();
+  const contactEmail = (formData.get("contactEmail") as string)?.trim() || null;
+  const provinceId = (formData.get("provinceId") as string)?.trim() || null;
+  const cityId = (formData.get("cityId") as string)?.trim() || null;
+  const venue = (formData.get("venue") as string)?.trim() || null;
+  const startDate = (formData.get("startDate") as string)?.trim();
+  const endDate = (formData.get("endDate") as string)?.trim() || null;
+  const ticketLink = (formData.get("ticketLink") as string)?.trim() || null;
+  const details = (formData.get("details") as string)?.trim() || null;
+
+  if (!eventName || !contactPhone || !startDate) {
+    return NextResponse.json(
+      { error: "Event name, contact number, and start date are required." },
+      { status: 400 }
+    );
+  }
 
   if (!(banner instanceof File) || !duration) {
     return NextResponse.json(
@@ -53,14 +72,22 @@ export async function POST(request: NextRequest) {
     .from("event-banners")
     .getPublicUrl(storagePath);
   const paymentId = randomUUID();
-  const eventSlug = `event-listing-${Date.now().toString(36)}-${paymentId.slice(0, 8)}`;
+  const eventSlug = `${slugify(eventName)}-${Date.now().toString(36)}`;
   const { data: event, error: eventError } = await serviceClient
     .from("events")
     .insert({
-      name: "Event Listing",
+      name: eventName,
       slug: eventSlug,
+      description: details,
       banner_url: bannerUrlData.publicUrl,
-      event_date: new Date().toISOString(),
+      event_date: new Date(startDate).toISOString(),
+      end_date: endDate ? new Date(endDate).toISOString() : null,
+      venue,
+      province_id: provinceId,
+      city_id: cityId,
+      contact_phone: contactPhone,
+      contact_email: contactEmail,
+      ticket_link: ticketLink,
       status: "pending",
       is_paid: false,
     })
@@ -88,8 +115,8 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json(
     createEventPayment({
-      email: process.env.EVENT_LISTING_EMAIL ?? "events@findmybiz.co.za",
-      eventName: "Event Listing",
+      email: contactEmail || process.env.EVENT_LISTING_EMAIL || "events@findmybiz.co.za",
+      eventName,
       amount: duration.price,
       paymentId,
       durationWeeks: duration.weeks,
